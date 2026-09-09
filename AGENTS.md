@@ -9,5 +9,6 @@
 - Preserve `.jyproject` compatibility wherever practical. Validate before replacing project state; retain recoverable data during migration and storage failures.
 - Web remains the main application core, with IndexedDB for persisted local projects. Future Tauri support is a thin platform layer around the same React application.
 - Do not introduce backend infrastructure, cloud accounts, collaboration, AI generation APIs, mesh modeling, rigging, animation or media editing systems unless explicitly requested.
+- All user-facing release notes, changelogs and public GitHub version summaries must be bilingual, with Simplified Chinese first and English second.
 
 Read `PROJECT_STATE.md` at the start of a development session, then only the relevant linked documentation. Current repository state takes precedence over old conversation history. After implementation changes, run relevant checks, `pnpm build` and the affected browser workflow; documentation-only work does not require application regressions. Update the project state after meaningful work, keeping completed work, unfinished work, known issues and the next task current. Commit implementation work only after relevant verification passes.

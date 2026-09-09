@@ -16,6 +16,7 @@ Updated: 2026-09-10. Current repository and uncommitted changes take precedence 
 - Focused text/placeholder/disabled contrast tokens and bilingual controls; visible/package version updated to 0.95.
 - Project schema 5, portable container 1 and Dexie schema 2. V0.9 projects migrate with safe defaults and retained IDs. Existing project/storage safety remains in place.
 - Preserved V0.9 shot, focus/lens/light, shared Scene Graph, annotations, semantic rules and export workflows.
+- Public GitHub documentation now has a Chinese-first bilingual README and changelog; the persistent release-language policy is recorded in `AGENTS.md`.
 
 TypeScript and production build passed. Two targeted V0.95 browser scripts passed, including direct gizmo dragging, all five panels, sixteen guide combinations, OBJ editing/synchronization, portable round-trip, autosave reload, legacy defaults, invalid/newer input rejection, export color isolation and rendered PNG inspection. See [verification](docs/VERIFICATION_V095.md). The historical V0.9 suite was not rerun.
 

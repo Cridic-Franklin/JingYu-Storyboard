@@ -6,13 +6,19 @@ See [PROJECT_STATE.md](../PROJECT_STATE.md) for the stable baseline, completed s
 
 ## V0.9 director workflow
 
-The authorized [V0.9 specification](V09_SPEC.md) has been implemented across P0–P3. Current status, verification and limitations belong in [PROJECT_STATE.md](../PROJECT_STATE.md).
+已授权的 [V0.9 规格](V09_SPEC.md)已完成 P0–P3，加入导演工作流、摄影机焦点、空间语义、灯光、约束检查与 AI 镜头资料导出。当前状态、验证范围与限制记录在 [PROJECT_STATE.md](../PROJECT_STATE.md)。
 
-Optional recent-object shortcuts are not included. Separate sketch-only exports, automatic outliner grouping, projected overlap analysis and ZIP project containers remain future work; they are not required by this V0.9 implementation. Free-text constraints require manual review, while structured rules support automatic validation.
+The authorized [V0.9 specification](V09_SPEC.md) has been implemented across P0–P3, adding the director workflow, camera focus, spatial semantics, lights, constraint validation and AI shot-material exports. Current status, verification and limitations belong in [PROJECT_STATE.md](../PROJECT_STATE.md).
+
+可选的最近对象快捷方式、独立草图导出、自动大纲分组、投影重叠分析与 ZIP 项目容器未包含在 V0.9 中。自由文本约束需要人工复核，结构化规则支持自动验证。
+
+Optional recent-object shortcuts, separate sketch-only exports, automatic outliner grouping, projected overlap analysis and ZIP project containers are not included in V0.9. Free-text constraints require manual review, while structured rules support automatic validation.
 
 ## V0.95 workflow and blocking
 
-Adds lightweight proxy poses, embedded OBJ placement, editor colors, per-workspace internal panels and adjustable composition spirals. This does not introduce animation, advanced rigging, FBX or desktop packaging. Current verification and remaining limits are in PROJECT_STATE.md.
+新增轻量角色姿势、内嵌 OBJ 调度、编辑显示颜色、按工作区保存的内部面板，以及可调整的黄金螺旋构图辅助线。本版本不包含动画、进阶绑定、FBX 或桌面打包。当前验证与限制见 [PROJECT_STATE.md](../PROJECT_STATE.md)。
+
+Adds lightweight proxy poses, embedded OBJ placement, editor colors, per-workspace internal panels and adjustable Golden Spiral composition guides. This release does not introduce animation, advanced rigging, FBX or desktop packaging. Current verification and remaining limits are in [PROJECT_STATE.md](../PROJECT_STATE.md).
 
 ## Static Web / GitHub Pages
 
