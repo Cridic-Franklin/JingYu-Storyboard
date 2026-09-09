@@ -1,3 +1,4 @@
+import type { ObjAsset } from './lib/obj';
 import { create } from 'zustand';
 import { defaultPlan, isLight } from './types';
 import type { PlanData, ObjectType, Overlay, Project, Shot, StageObject, TransformMode } from './types';
@@ -7,6 +8,7 @@ import { t } from './i18n';
 import { projectStorage, migrateProject } from './storage/ProjectStorage';
 export { migrateProject };
 interface State {
+  importObj: (asset: ObjAsset) => void;
   recovery: boolean;
   newProject: (name: string) => Promise<void>; openProject: (project: Project) => Promise<void>; openRecent: (id: string) => Promise<void>; saveProject: () => Promise<void>; saveAs: (name: string) => Promise<void>;
   updatePlan: (patch: Partial<PlanData>) => void; duplicateObject: (id: string) => void;
@@ -33,14 +35,14 @@ function persist(project: Project) {
     if (current === revision) useStore.setState({ saveStatus: 'error', error: error instanceof Error ? error.message : String(error) });
   });
 }
-const emptyProject: Project = { id: 'local-project', shots: [], activeShotId: null, nextShotNumber: 1, schemaVersion: 4, name: 'Untitled project', updatedAt: new Date().toISOString() };
+const emptyProject: Project = { id: 'local-project', shots: [], activeShotId: null, nextShotNumber: 1, schemaVersion: 5, name: 'Untitled project', updatedAt: new Date().toISOString() };
 function cloneScene(shot: Shot) {
   const ids = new Map(shot.objects.map(o => [o.id, crypto.randomUUID()]));
   const plan = structuredClone(shot.plan ?? defaultPlan());
   plan.sketches.forEach(s => { s.id = crypto.randomUUID(); });
   plan.measurements.forEach(m => { m.id = crypto.randomUUID(); for (const p of [m.a, m.b]) if (p.objectId) p.objectId = ids.get(p.objectId); });
   const focus = structuredClone(shot.focus); focus.targetId = focus.targetId ? ids.get(focus.targetId) ?? null : null;
-  return { primaryCharacterId: ids.get(shot.primaryCharacterId ?? '') ?? null, secondarySubjectId: ids.get(shot.secondarySubjectId ?? '') ?? null, backgroundAnchorId: ids.get(shot.backgroundAnchorId ?? '') ?? null, hardConstraints: shot.hardConstraints.map(c => ({ ...c, id: crypto.randomUUID(), objectId: ids.get(c.objectId) ?? c.objectId, referenceId: ids.get(c.referenceId) ?? c.referenceId })), includeTechnical: shot.includeTechnical, focus, environment: structuredClone(shot.environment), aspectRatio: shot.aspectRatio, objects: shot.objects.map(o => ({ ...structuredClone(o), id: ids.get(o.id)! })), plan, primarySubjectId: shot.primarySubjectId ? ids.get(shot.primarySubjectId) ?? null : null };
+  return { spiral: structuredClone(shot.spiral), useEditorColors: shot.useEditorColors, primaryCharacterId: ids.get(shot.primaryCharacterId ?? '') ?? null, secondarySubjectId: ids.get(shot.secondarySubjectId ?? '') ?? null, backgroundAnchorId: ids.get(shot.backgroundAnchorId ?? '') ?? null, hardConstraints: shot.hardConstraints.map(c => ({ ...c, id: crypto.randomUUID(), objectId: ids.get(c.objectId) ?? c.objectId, referenceId: ids.get(c.referenceId) ?? c.referenceId })), includeTechnical: shot.includeTechnical, focus, environment: structuredClone(shot.environment), aspectRatio: shot.aspectRatio, objects: shot.objects.map(o => ({ ...structuredClone(o), id: ids.get(o.id)! })), plan, primarySubjectId: shot.primarySubjectId ? ids.get(shot.primarySubjectId) ?? null : null };
 }
 let hydration: Promise<void> | undefined;
 export const useStore = create<State>((set, get) => {
@@ -67,6 +69,10 @@ export const useStore = create<State>((set, get) => {
     set({ project, recovery: false, selectedId: null, past: [], future: [], transaction: null, transactionKind: null, saveStatus: 'saved', error: '' });
   }
   return {
+    importObj: asset => {
+      get().endTransaction(); const object = { ...makeObject('OBJ'), name: asset.filename.replace(/\.obj$/i,''), asset };
+      editShot(s=>({...s,objects:[...s.objects,object],spatialDescription:''})); set({selectedId:object.id});
+    },
     recovery: false,
     newProject: async name => { const shot = makeShot(1); await switchProject({ ...emptyProject, id: crypto.randomUUID(), name: name.trim() || t('untitledProject'), shots: [shot], activeShotId: shot.id, nextShotNumber: 2, updatedAt: new Date().toISOString() }); },
     openProject: project => switchProject(migrateProject(project)),
@@ -141,7 +147,7 @@ export const useStore = create<State>((set, get) => {
     },
     updateObject: (id, patch) => {
       const object = get().project.shots.find(s => s.id === get().project.activeShotId)?.objects.find(o => o.id === id);
-      if (!object || (object.locked && ['position', 'rotation', 'scale', 'fov', 'frontYaw', 'light'].some(k => k in patch))) return;
+      if (!object || (object.locked && ['position', 'rotation', 'scale', 'fov', 'frontYaw', 'light', 'pose'].some(k => k in patch))) return;
       const { id: ignoredId, type: ignoredType, ...safePatch } = patch; void ignoredId; void ignoredType;
       editShot(shot => ({ ...shot, objects: shot.objects.map(o => o.id === id ? { ...o, ...safePatch } : o), spatialDescription: '' }));
     },

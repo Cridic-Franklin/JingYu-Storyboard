@@ -23,7 +23,7 @@ export async function cameraPNG(shot: Shot, width: number, annotations: CameraAn
 export async function planPNG(shot: Shot, options: PlanOptions, width = 1920): Promise<Blob> {
   const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = Math.round(width * .6);
   const context = canvas.getContext('2d')!; context.fillStyle = '#293234'; context.fillRect(0, 0, canvas.width, canvas.height);
-  await drawSvg(canvas, renderToStaticMarkup(<svg xmlns="http://www.w3.org/2000/svg" width={canvas.width} height={canvas.height} viewBox={planViewBox(shot)}><PlanDrawing shot={shot} options={options} /></svg>));
+  await drawSvg(canvas, renderToStaticMarkup(<svg xmlns="http://www.w3.org/2000/svg" width={canvas.width} height={canvas.height} viewBox={planViewBox(shot)}><PlanDrawing shot={shot} options={options} editorColors={shot.useEditorColors} /></svg>));
   return png(canvas);
 }
 export async function copyPNG(blob: Promise<Blob>, filename: string): Promise<boolean> {

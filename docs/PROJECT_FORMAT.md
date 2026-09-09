@@ -4,7 +4,7 @@ Current extension: `.jyproject`. Preserve existing readers and migration paths w
 
 ## Version 1 container
 
-Container version `1`, project `schemaVersion: 4`, and Dexie database schema `2` are separate version domains; an application release number does not automatically change any of them.
+Container version `1`, project `schemaVersion: 5`, and Dexie database schema `2` are separate version domains; an application release number does not automatically change any of them.
 
 The foundation implementation uses self-contained UTF-8 JSON instead of ZIP, avoiding a packaging dependency while the schema is evolving:
 
@@ -13,7 +13,7 @@ The foundation implementation uses self-contained UTF-8 JSON instead of ZIP, avo
   "format": "JingYu Project",
   "version": 1,
   "project": {
-    "schemaVersion": 4,
+    "schemaVersion": 5,
     "id": "uuid",
     "name": "JUST_BREATHE",
     "updatedAt": "ISO-8601",
@@ -58,3 +58,13 @@ ZIP packaging with `project.json` and separate embedded assets is a future conta
 - `includeTechnical`: defaults false; controls optional coordinate text. Camera annotation flags include semantic labels and focus overlays.
 
 Older V0.2/V0.3 projects receive defaults without changing existing object IDs/transforms. Invalid new fields and unsupported future schema versions are rejected. Container version remains 1 and Dexie schema remains 2. V0.3 readers cannot read schema 4; compatibility here means safe older-file loading into V0.9, not opening V0.9 files in older applications. The AI Shot Packet ZIP is an export artifact, separate from the JSON `.jyproject` format.
+
+## V0.95 blocking fields (schema 5)
+
+Characters contain `pose`: preset, optional base preset for adjusted poses, hip height in meters, and local XYZ joint angles in degrees. The ten joints cover torso/head, both shoulders/elbows and both hips/knees. Missing legacy pose becomes Standing; IDs and object transforms are preserved.
+
+Optional object `displayColor` is a six-digit hex editor color. Imported `OBJ` objects embed `asset: { format: "obj", filename, positions }`: finite triangle vertex coordinates, with no filesystem dependency. OBJ import limits are 20 MB source and 100,000 triangles (300,000 expanded vertices). Normals are recomputed; materials/textures are not imported. Embedded arrays are validated before replacing project state. Duplication copies asset and pose data.
+
+Shots contain `spiral: { corner, mirror, x, y, scale }`; offsets are normalized frame fractions, scale is 0.1–3, and the default guide has no offset. `useEditorColors` defaults to false and explicitly opts Camera/PNG exports into editor colors. These fields also copy with the previous shot's scene.
+
+Workspace layouts are browser preferences, not scene/project data. The existing `ssd-preferences-v02` localStorage key now retains each workspace's split sizes and floating/hidden panel rectangles. Older preferences receive validated defaults; rectangles are clamped to the browser window. Reset Layout only resets the active workspace. Portable projects do not override another computer's UI layout.

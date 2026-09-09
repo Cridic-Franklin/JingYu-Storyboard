@@ -1,3 +1,4 @@
+import { spiralPath } from '../lib/spiral';
 import type { CameraAnnotations, Overlay, Shot } from '../types';
 import { storyboardCamera } from '../lib/scene';
 import { measurementPoint } from '../lib/spatial';
@@ -11,11 +12,6 @@ function wrapLabel(text:string,limit:number) {
  const words=text.split(/\s+/u),lines:string[]=[];let line='';
  for(const word of words){if(word.length>limit){if(line){lines.push(line);line='';}for(let i=0;i<word.length;i+=limit)lines.push(word.slice(i,i+limit));}else if((line+' '+word).trim().length>limit){lines.push(line);line=word;}else line=(line+' '+word).trim();}if(line)lines.push(line);return lines;
 }
-function spiral(width:number,height:number) {
- const points=Array.from({length:150},(_,i)=>{const angle=i/149*Math.PI*5,radius=Math.exp(-angle*Math.log((1+Math.sqrt(5))/2)/(Math.PI/2));return {x:Math.cos(angle)*radius,y:Math.sin(angle)*radius};});
- const xs=points.map(p=>p.x),ys=points.map(p=>p.y),minX=Math.min(...xs),minY=Math.min(...ys),dx=Math.max(...xs)-minX,dy=Math.max(...ys)-minY;
- const scale=Math.min(width*.9/dx,height*.9/dy);return points.map((p,i)=>`${i?'L':'M'}${(width-dx*scale)/2+(p.x-minX)*scale},${(height-dy*scale)/2+(p.y-minY)*scale}`).join(' ');
-}
 export function CameraOverlayContent({ shot, annotations = shot.annotations, guides = shot.overlays, labelScale = 1 }: { shot: Shot; annotations?: CameraAnnotations; guides?: Overlay[]; labelScale?: number }) {
  const data=analyzeShot(shot),camObject=shot.objects.find(o=>o.type==='Camera');if(!camObject)return null;
  const camera=storyboardCamera(camObject,shot.aspectRatio),width=1600,height=1600/shot.aspectRatio,font=Math.min(22,height*.033)*labelScale,lineHeight=font*1.25;
@@ -26,7 +22,7 @@ export function CameraOverlayContent({ shot, annotations = shot.annotations, gui
  {guides.includes('thirds')&&<path data-overlay="thirds" stroke="#f4f1de88" d={`M${width/3} 0v${height}M${width*2/3} 0v${height}M0 ${height/3}h${width}M0 ${height*2/3}h${width}`} />}
  {guides.includes('cross')&&<path data-overlay="cross" d={`M${width/2-30} ${height/2}h60M${width/2} ${height/2-30}v60`} />}
  {guides.includes('safe')&&<rect data-overlay="safe" x={width*.05} y={height*.05} width={width*.9} height={height*.9} strokeDasharray="12 8" />}
- {guides.includes('spiral')&&<path data-overlay="spiral" strokeWidth="3" d={spiral(width,height)} />}
+ {guides.includes('spiral')&&<path data-overlay="spiral" strokeWidth="3" d={spiralPath(width,height,shot.spiral)} />}
  <FocusDrawing shot={shot} point={annotations.focusPoint} region={annotations.focusRegion} />
  {infos.map((info,index)=>{
  const s=info.screen,o=shot.objects.find(o=>o.id===info.id)!,rect=rectangles[index],x=s.x!*16,y=s.y!*height/100;

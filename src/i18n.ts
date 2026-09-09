@@ -2,6 +2,13 @@ import { useSettings, type Language } from './settings';
 
 // All interface copy is defined here. Object names and authored shot text are user data.
 const messages = {
+ OBJ: ['Imported OBJ', '导入 OBJ'], importObj: ['Import OBJ…', '导入 OBJ…'], objLimit: ['OBJ: up to 20 MB / 100,000 triangles. Geometry only; no MTL or textures.', 'OBJ：最大 20 MB / 10 万三角面。仅几何，不含 MTL 或贴图。'], objError: ['Could not import OBJ. Check vertices, faces and size limits.', '无法导入 OBJ，请检查顶点、面和文件大小。'],
+ displayColor: ['Display Color', '显示颜色'], resetColor: ['Default', '默认'], editorColorHint: ['Editor color only; no material or AI color instruction.', '仅用于编辑显示，不作为材质或 AI 颜色指令。'], cameraEditorColors: ['Use editor colors in Camera / exports', '摄影机视图及导出使用编辑颜色'],
+ characterPose: ['Character Pose', '角色姿势'], posePreset: ['Pose Preset', '姿势预设'], standing: ['Standing', '站立'], walking: ['Walking', '行走'], crouching: ['Crouching', '蹲姿'], singleKnee: ['Single-knee kneeling', '单膝跪地'], doubleKnee: ['Double-knee kneeling', '双膝跪地'], sitting: ['Sitting', '坐姿'], leaning: ['Leaning forward', '身体前倾'], customPose: ['Custom pose', '自定义姿势'], poseMode: ['Pose Mode', '姿势模式'], poseHint: ['Select a joint marker and drag its rotation rings, or adjust angles below. Joint edits share scene undo.', '选择关节点拖动旋转环，或在下方调整角度。姿势编辑使用场景撤销。'], joint: ['Joint', '关节'], hipHeight: ['Hip height (m)', '髋部高度（米）'],
+ torso: ['Torso', '躯干'], head: ['Head', '头部'], leftShoulder: ['Left shoulder', '左肩'], rightShoulder: ['Right shoulder', '右肩'], leftElbow: ['Left elbow', '左肘'], rightElbow: ['Right elbow', '右肘'], leftHip: ['Left hip', '左髋'], rightHip: ['Right hip', '右髋'], leftKnee: ['Left knee', '左膝'], rightKnee: ['Right knee', '右膝'],
+ spiralCorner: ['Spiral orientation', '螺旋方向'], topLeft: ['Top left', '左上'], topRight: ['Top right', '右上'], bottomLeft: ['Bottom left', '左下'], bottomRight: ['Bottom right', '右下'], mirrorSpiral: ['Mirror spiral', '镜像螺旋'], guideOffsetX: ['Guide X offset (%)', '辅助线 X 偏移（%）'], guideOffsetY: ['Guide Y offset (%)', '辅助线 Y 偏移（%）'], guideScale: ['Guide scale (%)', '辅助线缩放（%）'], resetSpiral: ['Reset Spiral', '重置螺旋'],
+ maximizePanel: ['Maximize', '最大化'], floatPanel: ['Float', '浮动'], dockPanel: ['Dock', '停靠'], hidePanel: ['Hide panel', '隐藏面板'],
+
  numericHelp: ['Enter or blur: confirm · Esc: cancel · Arrows: 0.1 · Shift: 1 · Ctrl: 0.01', '回车或失焦确认 · Esc 取消 · 方向键 0.1 · Shift 1 · Ctrl 0.01'],
  lightDirections: ['Light directions', '灯光方向'],
  workspacePreset: ['Workspace', '工作区'], blocking: ['Blocking', '场面调度'], composition: ['Composition', '构图'], aiReview: ['AI Review', 'AI 复核'], fileExport: ['Export…', '导出…'],
@@ -109,7 +116,7 @@ const messages = {
   noStoryboard: ['No storyboard yet', '尚未导入分镜图'], storyboardFor: ['Storyboard for {name}', '{name} 的分镜图'], untitledShot: ['Untitled shot', '未命名镜头'], addMoment: ['Add a moment to your sequence.', '为分镜序列添加一个片刻。'],
   Draft: ['Draft', '草稿'], Approved: ['Approved', '已确认'], newShot: ['New shot', '新建镜头'], duplicateShot: ['Duplicate Shot', '复制镜头'], copyPrevious: ['Copy Scene From Previous Shot', '从上一镜头复制场景'], copySuffix: ['{name} — copy', '{name} — 副本'],
   confirmCopy: ['Replace this shot’s scene with the previous shot’s scene? You can undo this action.', '用上一镜头的场景替换当前场景？此操作可撤销。'],
-  tagline: ['Every frame starts with a little direction.', '每一帧，从空间调度开始。'], versionTag: ['DIRECTOR WORKFLOW · 0.9', '导演工作流 · 0.9'],
+  tagline: ['Every frame starts with a little direction.', '每一帧，从空间调度开始。'], versionTag: ['DIRECTOR WORKFLOW · 0.95', '导演工作流 · 0.95'],
   reference: ['Storyboard reference', '分镜参考图'], removeImage: ['Remove storyboard image', '移除分镜图'], replaceImage: ['Replace image', '替换图片'], importImage: ['Import storyboard image', '导入分镜图'], imageFormats: ['PNG, JPG, WebP or GIF · up to 10 MB', 'PNG、JPG、WebP 或 GIF · 最大 10 MB'],
   imageTypeError: ['Choose a PNG, JPG, WebP or GIF image.', '请选择 PNG、JPG、WebP 或 GIF 图片。'], imageSizeError: ['Please choose an image smaller than 10 MB.', '请选择小于 10 MB 的图片。'], imageReadError: ['This image could not be opened. Try another file.', '无法打开此图片，请尝试其他文件。'],
   spatialDescription: ['Spatial description', '空间关系描述'], sceneWords: ['SCENE → WORDS', '场景 → 文字'], compositionNotes: ['COMPOSITION NOTES', '构图说明'], copy: ['Copy', '复制'], copied: ['Copied', '已复制'], manualCopy: ['Press Ctrl+C', '请按 Ctrl+C'], generatedDescription: ['Generated spatial description', '生成的空间描述'],

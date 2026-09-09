@@ -10,7 +10,7 @@ export function FocusControls({ shot }: { shot: Shot }) {
   const t = useT(), f = shot.focus, camera = shot.objects.find(o => o.type === 'Camera');
   const update = (patch: Partial<typeof f>) => useStore.getState().updateShot({ focus: { ...f, ...patch } });
   const p = focusPosition(shot), distance = camera && p ? p.distanceTo(new Vector3(...camera.position)) : null;
-  const pick = (focusTool: 'point' | 'rectangle' | 'ellipse') => useSettings.setState({ workspaceView: 'camera', focusTool });
+  const pick = (focusTool: 'point' | 'rectangle' | 'ellipse') => {useSettings.getState().setWorkspace('camera');useSettings.setState({focusTool});};
   return <section className="inspector-section"><h3>{t('focusSystem')}</h3><h4>{t('opticalFocus')}</h4>
     <label className="field-label">{t('focusTarget')}<select aria-label={t('focusTarget')} value={f.targetId ?? ''} onChange={e => update({ targetId: e.target.value || null, point: null })}><option value="">{t('none')}</option>{shot.objects.filter(o => o.type !== 'Camera' && !isLight(o)).map(o => <option key={o.id} value={o.id}>{o.name}</option>)}</select></label>
     {distance !== null && <p className="hint" data-testid="focus-distance">{t('focusDistance')}: {distance.toFixed(2)} m</p>}

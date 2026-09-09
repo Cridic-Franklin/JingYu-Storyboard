@@ -1,3 +1,6 @@
+import { validatePose } from '../lib/pose';
+import { validateObj } from '../lib/obj';
+import { validateSpiral } from '../lib/spiral';
 import Dexie, { type Table } from 'dexie';
 import { defaultAnnotations, defaultPlan, defaultFocus, defaultEnvironment, defaultLight, isLight, type Project, type Shot, type StageObject } from '../types';
 
@@ -23,12 +26,12 @@ const record = (v: unknown): Record<string, unknown> => {
   return v as Record<string, unknown>;
 };
 const vector = (v: unknown) => Array.isArray(v) && v.length === 3 && v.every(n => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) < 1e6);
-const types = ['Character', 'Prop', 'Camera', 'Cube', 'Sphere', 'Cylinder', 'Capsule', 'Cone', 'Plane', 'DirectionalLight', 'PointLight', 'SpotLight'];
+const types = ['OBJ', 'Character', 'Prop', 'Camera', 'Cube', 'Sphere', 'Cylinder', 'Capsule', 'Cone', 'Plane', 'DirectionalLight', 'PointLight', 'SpotLight'];
 const text = (v: unknown, fallback = '') => typeof v === 'string' ? v : fallback;
 export function migrateProject(input: unknown): Project {
   const raw = record(input);
   if (raw.schemaVersion !== undefined && (!Number.isInteger(raw.schemaVersion) || Number(raw.schemaVersion) < 1)) throw new Error('Invalid project schema version.');
-  if (typeof raw.schemaVersion === 'number' && raw.schemaVersion > 4) throw new Error('This project needs a newer version of JingYu. Its data was not changed.');
+  if (typeof raw.schemaVersion === 'number' && raw.schemaVersion > 5) throw new Error('This project needs a newer version of JingYu. Its data was not changed.');
   if (typeof raw.id !== 'string' || !Array.isArray(raw.shots) || raw.shots.length > 1000) throw new Error('Invalid project ID or shot list.');
   const allIds = new Set<string>();
   const shots = raw.shots.map(value => {
@@ -44,7 +47,10 @@ export function migrateProject(input: unknown): Project {
       if (o.frontYaw !== undefined && (typeof o.frontYaw !== 'number' || !Number.isFinite(o.frontYaw))) throw new Error('Invalid semantic front direction.');
       const light = isLight({ type: String(o.type) }) ? { ...defaultLight(), ...(o.light ? record(o.light) : {}) } : undefined;
       if (light && (!/^#[0-9a-f]{6}$/i.test(light.color) || !Number.isFinite(light.intensity) || light.intensity < 0 || light.intensity > 10000 || !Number.isFinite(light.range) || light.range < 0 || light.range > 1000 || !Number.isFinite(light.coneAngle) || light.coneAngle < 1 || light.coneAngle > 170 || typeof light.castShadow !== 'boolean')) throw new Error('Invalid light settings.');
-      return { ...o, ...(light ? { light } : {}), name: text(o.name, String(o.type)), semanticName: text(o.semanticName), visible: o.visible ?? true, locked: o.locked ?? false, fov: o.fov ?? 45, frontYaw: o.frontYaw ?? 0, frontLabel: text(o.frontLabel) } as unknown as StageObject;
+      if(o.displayColor !== undefined && (typeof o.displayColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(o.displayColor))) throw new Error('Invalid editor color.');
+      const pose = o.type === 'Character' ? validatePose(o.pose) : undefined;
+      const asset = o.type === 'OBJ' ? validateObj(o.asset) : undefined;
+      return { ...o, ...(pose ? {pose} : {}), ...(asset ? {asset} : {}), ...(light ? { light } : {}), name: text(o.name, String(o.type)), semanticName: text(o.semanticName), visible: o.visible ?? true, locked: o.locked ?? false, fov: o.fov ?? 45, frontYaw: o.frontYaw ?? 0, frontLabel: text(o.frontLabel) } as unknown as StageObject;
     });
     if (objects.filter(o => o.type === 'Camera').length > 1) throw new Error('Multiple active cameras are not supported in this version. No data was removed.');
     if (shot.overlays !== undefined && (!Array.isArray(shot.overlays) || !shot.overlays.every(k => ['thirds', 'cross', 'safe', 'spiral'].includes(String(k))))) throw new Error('Unsupported composition guides. No data was changed.');
@@ -74,9 +80,10 @@ export function migrateProject(input: unknown): Project {
     const relationValues: Record<string,string[]> = { subject: ['front','frontRight','relativeRight','backRight','back','backLeft','relativeLeft','frontLeft'], screen: ['screenLeft','screenRight','screenAbove','screenBelow'], depth: ['nearer','farther'], orientation: ['faces'] };
     if (!Array.isArray(rules) || rules.length > 10000 || rules.some(c => !c || typeof c.id !== 'string' || typeof c.objectId !== 'string' || typeof c.referenceId !== 'string' || !relationValues[c.space]?.includes(c.relation)) || new Set(rules.map(c => c.id)).size !== rules.length) throw new Error('Invalid spatial constraints.');
     if (shot.includeTechnical !== undefined && typeof shot.includeTechnical !== 'boolean') throw new Error('Invalid export preference.');
-    return { ...shot, ...subjectIds, hardConstraints: rules, includeTechnical: shot.includeTechnical ?? false, focus, environment, aspectRatio: shot.aspectRatio ?? 16 / 9, title: text(shot.title), description: text(shot.description), status: shot.status === 'Approved' ? 'Approved' : 'Draft', image: shot.image ?? null, objects, overlays: Array.isArray(shot.overlays) ? shot.overlays.filter(k => ['thirds', 'cross', 'safe', 'spiral'].includes(String(k))) : ['thirds'], spatialDescription: text(shot.spatialDescription), plan, annotations: { ...defaultAnnotations(), ...(shot.annotations ? record(shot.annotations) : {}) }, primarySubjectId: typeof shot.primarySubjectId === 'string' && objects.some(o => o.id === shot.primarySubjectId) ? shot.primarySubjectId : null, constraints: text(shot.constraints), negativeConstraints: text(shot.negativeConstraints) } as Shot;
+    if(shot.useEditorColors !== undefined && typeof shot.useEditorColors !== 'boolean') throw new Error('Invalid editor color preference.');
+    return { ...shot, spiral: validateSpiral(shot.spiral), useEditorColors: shot.useEditorColors ?? false, ...subjectIds, hardConstraints: rules, includeTechnical: shot.includeTechnical ?? false, focus, environment, aspectRatio: shot.aspectRatio ?? 16 / 9, title: text(shot.title), description: text(shot.description), status: shot.status === 'Approved' ? 'Approved' : 'Draft', image: shot.image ?? null, objects, overlays: Array.isArray(shot.overlays) ? shot.overlays.filter(k => ['thirds', 'cross', 'safe', 'spiral'].includes(String(k))) : ['thirds'], spatialDescription: text(shot.spatialDescription), plan, annotations: { ...defaultAnnotations(), ...(shot.annotations ? record(shot.annotations) : {}) }, primarySubjectId: typeof shot.primarySubjectId === 'string' && objects.some(o => o.id === shot.primarySubjectId) ? shot.primarySubjectId : null, constraints: text(shot.constraints), negativeConstraints: text(shot.negativeConstraints) } as Shot;
   });
-  return { ...raw, id: raw.id, shots, activeShotId: shots.some(s => s.id === raw.activeShotId) ? raw.activeShotId as string : shots[0]?.id ?? null, nextShotNumber: Math.max(Number(raw.nextShotNumber) || 1, ...shots.map(s => s.number + 1)), schemaVersion: 4, name: text(raw.name, 'Untitled project'), updatedAt: text(raw.updatedAt, new Date().toISOString()) } as Project;
+  return { ...raw, id: raw.id, shots, activeShotId: shots.some(s => s.id === raw.activeShotId) ? raw.activeShotId as string : shots[0]?.id ?? null, nextShotNumber: Math.max(Number(raw.nextShotNumber) || 1, ...shots.map(s => s.number + 1)), schemaVersion: 5, name: text(raw.name, 'Untitled project'), updatedAt: text(raw.updatedAt, new Date().toISOString()) } as Project;
 }
 export function projectBlob(project: Project): Blob {
   return new Blob([JSON.stringify({ format: 'JingYu Project', version: 1, project }, null, 2)], { type: 'application/json' });
@@ -92,7 +99,7 @@ export class WebProjectStorage implements ProjectStorage {
   activate(id: string) { localStorage.setItem('jy-active-project', id); }
   async load(id: string) {
     const raw = await this.db.projects.get(id); if (!raw) return undefined;
-    if (raw.schemaVersion !== 4 && !(await this.db.backups.where('projectId').equals(id).toArray()).some(b => (b.data as { schemaVersion?: number })?.schemaVersion === raw.schemaVersion)) await this.db.backups.add({ projectId: id, createdAt: new Date().toISOString(), data: raw });
+    if (raw.schemaVersion !== 5 && !(await this.db.backups.where('projectId').equals(id).toArray()).some(b => (b.data as { schemaVersion?: number })?.schemaVersion === raw.schemaVersion)) await this.db.backups.add({ projectId: id, createdAt: new Date().toISOString(), data: raw });
     return migrateProject(raw);
   }
   async save(project: Project) { await this.db.projects.put(project); }

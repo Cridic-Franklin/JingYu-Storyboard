@@ -1,3 +1,4 @@
+import { CharacterGeometry, ObjGeometry } from './BlockingGeometry';
 import { isLight } from '../types';
 import { FocusDrawing, FocusInteraction } from './FocusOverlay';
 import { ratioLabel } from '../lib/camera';
@@ -21,20 +22,12 @@ class ViewErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
   render() { return this.state.failed ? <div className="empty-state">{t('webglError')}</div> : this.props.children; }
 }
 
-function Geometry({ object, selected = false }: { object: StageObject; selected?: boolean }) {
-  const color = selected ? '#e5b574' : object.type === 'Character' ? '#a0b6af' : object.type === 'Prop' ? '#ca8b58' : '#8c969c';
+function Geometry({ object, selected = false, editorColors = true, editing = false }: { object: StageObject; selected?: boolean; editorColors?: boolean; editing?: boolean }) {
+  const color = editorColors && object.displayColor ? object.displayColor : selected ? '#e5b574' : object.type === 'Character' ? '#a0b6af' : object.type === 'Prop' ? '#ca8b58' : '#8c969c';
   const material = <meshStandardMaterial color={color} roughness={0.75} emissive={selected ? '#503714' : '#000000'} emissiveIntensity={0.25} />;
   if (isLight(object)) return <group><mesh><sphereGeometry args={[.17,12,8]} /><meshBasicMaterial color={object.light?.color ?? '#ffe5a0'} /></mesh>{object.type !== 'PointLight' && <group rotation={[Math.PI/2,0,0]}><mesh position={[0,.55,0]}><cylinderGeometry args={[.025,.025,1,8]} /><meshBasicMaterial color="#e9cf85" /></mesh><mesh position={[0,1.1,0]}><coneGeometry args={[.12,.25,8]} /><meshBasicMaterial color="#e9cf85" /></mesh></group>}</group>;
-  if (object.type === 'Character') return <group>
-    <mesh position={[0, 1.62, 0]} castShadow><sphereGeometry args={[0.15, 20, 16]} />{material}</mesh>
-    <mesh position={[0, 1.63, 0.145]}><boxGeometry args={[0.13, 0.045, 0.045]} /><meshStandardMaterial color="#374840" /></mesh>
-    <mesh position={[0, 1.24, 0]} castShadow><capsuleGeometry args={[0.19, 0.34, 8, 16]} />{material}</mesh>
-    {[-1, 1].map(side => <group key={side}>
-      <mesh position={[side * 0.28, 1.12, 0]} rotation={[0, 0, side * 0.13]} castShadow><capsuleGeometry args={[0.068, 0.46, 6, 12]} />{material}</mesh>
-      <mesh position={[side * 0.105, 0.46, 0]} castShadow><capsuleGeometry args={[0.088, 0.66, 6, 12]} />{material}</mesh>
-      <mesh position={[side * 0.105, 0.075, 0.07]} castShadow><boxGeometry args={[0.18, 0.15, 0.32]} />{material}</mesh>
-    </group>)}
-  </group>;
+  if (object.type === 'Character') return <CharacterGeometry object={object} material={material} editing={editing} />;
+  if (object.type === 'OBJ' && object.asset) return <ObjGeometry object={object} material={material} />;
   if (object.type === 'Prop') return <group>
     <mesh position={[0, 0.19, 0]} castShadow><cylinderGeometry args={[0.22, 0.3, 0.38, 24]} />{material}</mesh>
     <mesh position={[0, 0.56, 0]} castShadow><cylinderGeometry args={[0.18, 0.22, 0.36, 24]} /><meshStandardMaterial color={selected ? '#ffd399' : '#e4ad6d'} emissive="#c17428" emissiveIntensity={0.25} /></mesh>
@@ -59,6 +52,7 @@ function EditableObject({ object }: { object: StageObject }) {
   const dragging = useRef(false);
   const selected = useStore(s => s.selectedId === object.id);
   const mode = useStore(s => s.mode);
+  const poseMode = useSettings(s => s.poseMode);
   const showLabels = useSettings(s => s.showLabels);
   const navigating = useSettings(s => s.navigating);
   const update = () => {
@@ -77,12 +71,12 @@ function EditableObject({ object }: { object: StageObject }) {
     group.current.scale.fromArray(object.scale);
   }, [object.position, object.rotation, object.scale]);
   return <>
-    <group ref={group} visible={object.visible} onClick={event => { if (event.altKey || event.delta > 3) return; event.stopPropagation(); useStore.getState().selectObject(object.id); }}>
-      <Geometry object={object} selected={selected} />
+    <group ref={group} name={object.id} visible={object.visible} onClick={event => { if (event.altKey || event.delta > 3) return; event.stopPropagation(); useStore.getState().selectObject(object.id); }}>
+      <Geometry object={object} selected={selected} editing={selected && poseMode && !object.locked && object.visible} />
       {showLabels && object.visible && <Html position={[0, localBounds(object).max.y + 0.25, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[5, 0]}><span className="object-label">{object.name}</span></Html>}
       {selected && object.type !== 'Camera' && <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.45, 0.48, 48]} /><meshBasicMaterial color="#e5b574" depthWrite={false} /></mesh>}
     </group>
-    {selected && object.visible && !object.locked && mode !== 'select' && <TransformControls object={group} enabled={!navigating} mode={mode} size={0.85} onMouseDown={() => { useStore.getState().beginTransaction('transform'); dragging.current = true; }} onObjectChange={update} onMouseUp={() => { update(); dragging.current = false; useStore.getState().endTransaction('transform'); }} />}
+    {selected && !(poseMode && object.type === 'Character') && object.visible && !object.locked && mode !== 'select' && <TransformControls object={group} enabled={!navigating} mode={mode} size={0.85} onMouseDown={() => { useStore.getState().beginTransaction('transform'); dragging.current = true; }} onObjectChange={update} onMouseUp={() => { update(); dragging.current = false; useStore.getState().endTransaction('transform'); }} />}
   </>;
 }
 
@@ -148,7 +142,7 @@ export function CameraPreview({ shot, annotations }: { shot: Shot; annotations?:
     {camera ? <ViewErrorBoundary><Canvas shadows gl={{ preserveDrawingBuffer: true }} dpr={[1, 1.6]} camera={{ fov: camera.fov, near: 0.1, far: 200 }}>
       <color attach="background" args={['#747e7e']} /><fog attach="fog" args={['#747e7e', 25, 90]} /><Lighting shot={shot} /><Ground />
       <PreviewCamera aspect={shot.aspectRatio} cameraObject={camera} /><CaptureBridge shotId={shot.id} />
-      {shot.objects.filter(o => o.type !== 'Camera' && !isLight(o) && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} /></group>)}
+      {shot.objects.filter(o => o.type !== 'Camera' && !isLight(o) && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} editorColors={shot.useEditorColors} /></group>)}
     </Canvas></ViewErrorBoundary> : <div className="empty-state">{t('missingCamera')}</div>}
     {camera && <svg className="composition-overlay" viewBox={`0 0 1600 ${1600 / shot.aspectRatio}`} preserveAspectRatio="none" aria-label={t('compositionGuides')}>
       <CameraOverlayContent labelScale={Math.max(1, Math.min(2,1600 / Math.max(1,frameWidth) * 10 / 22))} shot={shot} annotations={annotations} />{!annotations && <FocusDrawing shot={shot} />}

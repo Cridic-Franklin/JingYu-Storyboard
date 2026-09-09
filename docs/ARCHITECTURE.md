@@ -59,3 +59,10 @@ Shot `aspectRatio` drives both actual perspective projection and export/overlay 
 Directional, point and spot lights are ordinary objects in the shared graph. Directional/spot local +Z is the emitted direction. Their editor proxies are excluded from camera rendering. Existing projects retain the default lighting rig; adding a light disables it, and the Inspector can re-enable it explicitly.
 
 Camera capture registrations form a per-shot set so leaving an enlarged camera view preserves the remaining preview's export callback. Export dialogs block editing while asynchronous packet/board generation captures the current shot.
+
+## V0.95 blocking and workspace modules
+
+- `lib/pose.ts` defines joint offsets, preset angles and bounds. `BlockingGeometry.tsx` renders that same hierarchy; joint rotation controls live at the Three scene root so parent transforms cannot double-transform the gizmos. Joint edits use the existing scene transaction/undo path. `PosePlan.tsx` projects the articulated segments and imported object bounds into Plan.
+- `lib/obj.ts` parses OBJ vertices/faces into embedded triangles without network or filesystem references; `BlockingGeometry.tsx` renders them and disposes GPU geometry on replacement/unmount. Primitive/OBJ/character transforms remain ordinary StageObject data. No second asset scene is introduced.
+- `lib/spiral.ts` regenerates a uniformly fitted logarithmic golden spiral from the frame dimensions and per-shot settings. Live overlays and exports share `CameraOverlayContent`.
+- `settings.ts` owns validated per-workspace layouts; `Layout.tsx` supplies controls and pointer gestures for internal floating panels. Hidden panels stay mounted offscreen so camera capture remains available. Workspace state never owns scene objects.

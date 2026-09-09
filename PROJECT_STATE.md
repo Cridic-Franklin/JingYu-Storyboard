@@ -1,40 +1,40 @@
 # JingYu / 镜域 — Project state
 
-Updated: 2026-09-09. Current handoff; replace outdated status rather than accumulating session logs.
+Updated: 2026-09-10. Current repository and uncommitted changes take precedence over conversation history.
 
 ## Stable baseline
 
-**V0.9 — Director Workflow & AI Spatial Communication.** Verified implementation is recorded in the commit titled `Implement JingYu V0.9 director and AI spatial workflow` (resolve its hash from Git history). Previous V0.3 baseline: `22a4d250e739b07976bc5e0b76c4cc72be5a4beb`.
-
-The current repository and uncommitted changes are authoritative over conversation history.
+**V0.95 — Workflow & Blocking Update.** Resolve the release commit from the title `Implement JingYu V0.95 workflow and blocking update`. Previous V0.9 baseline: `4e80019cb256fbb3681a1ac7e838e160c2b176b4`.
 
 ## Completed work
 
-- P0: bilingual searchable/scrollable object menu; reusable draft-safe numeric fields; shot aspect/projection and export dimensions; grouped camera size/angle/lens presets; optical/visual focus; shared lights/environment; browser-native file-handle workflow with portable fallback.
-- P1: independent primary character/visual subject/secondary/background roles; distinct screen/subject/world data; crop/body visibility and depth semantics; concise semantic TXT/JSON; structured hard-rule validation, edit/continue and separate spatial negatives.
-- P2: clean/director/AI frames, Plan PNG, clipboard image, TXT/JSON, six-file current-shot AI ZIP and combined reference board.
-- P3: explicit orientation labels, simple label offsets/wrapping, workspace presets, simultaneous Camera/Plan AI Review, numeric tooltips and compact controls.
-- Preserved shot management, shared Scene Graph, Plan/3D synchronization, bilingual UI, Maya navigation, resizable workspace, sketches/measurements, undo, portable project data and IndexedDB autosave safety.
-- Project schema 4 retains `.jyproject` JSON container version 1 and Dexie schema 2; older projects migrate with defaults and retained IDs. Backups are retained per source schema version.
+- Articulated Character proxy: seven blocking presets, ten editable joints, direct Pose Mode rotation, numeric angles/hip height, shared undo and locking. Posed geometry drives bounds, camera framing and Plan segments; TXT/JSON include pose information.
+- Inspector swatches/custom display color for primitives, Character and imported OBJ. Camera/PNG output uses editor colors only with explicit per-shot opt-in; colors do not become AI material instructions.
+- Embedded OBJ vertices/faces import, normal object editing and duplication, shared Plan/3D/Camera data, portable save/open and semantic exports.
+- Per-workspace validated layouts with internal maximize/restore, float/dock, header dragging, grip resizing and hide. Reset restores the active workspace; layouts persist locally. Hidden Camera panels retain export capability.
+- Mathematical golden spiral with four orientations, mirror, normalized offsets, scale/reset and shot persistence. Preview and Director overlays share the same aspect-aware curve.
+- Focused text/placeholder/disabled contrast tokens and bilingual controls; visible/package version updated to 0.95.
+- Project schema 5, portable container 1 and Dexie schema 2. V0.9 projects migrate with safe defaults and retained IDs. Existing project/storage safety remains in place.
+- Preserved V0.9 shot, focus/lens/light, shared Scene Graph, annotations, semantic rules and export workflows.
 
-Five targeted V0.9 browser scripts, migration/file-handle tests, ZIP inspection and TypeScript/production build passed. See [verification](docs/VERIFICATION_V09.md) for exact evidence and limitations. Do not repeat the historical V0.3 suite without a relevant reason.
+TypeScript and production build passed. Two targeted V0.95 browser scripts passed, including direct gizmo dragging, all five panels, sixteen guide combinations, OBJ editing/synchronization, portable round-trip, autosave reload, legacy defaults, invalid/newer input rejection, export color isolation and rendered PNG inspection. See [verification](docs/VERIFICATION_V095.md). The historical V0.9 suite was not rerun.
 
-## Unfinished / deferred work
+## Unfinished / deferred scope
 
-No core P0/P1 requirement remains intentionally deferred. Optional recently used object shortcuts were not added. GLB/FBX, modeling/animation/editing, AI generation APIs, accounts/cloud/collaboration, Tauri runtime and deployment remain outside V0.9. See the [authorized specification](docs/V09_SPEC.md) and [release plan](docs/RELEASE_PLAN.md).
+No required V0.95 feature is intentionally omitted. Optional MTL is not implemented. FBX, advanced/imported rigs, animation, skinning, IK, detached OS windows, Tauri packaging, cloud and AI APIs remain outside scope.
 
 ## Known limitations
 
-- Automatic validation covers structured rules; free-text constraints require explicit manual review.
-- Proxy-based crops, body regions, depth layers and semantic front targeting are approximations, without occlusion analysis or physical DOF.
-- Dense diagrams can still have overlapping labels; offsets are a lightweight heuristic.
-- Browser file handles are session-only and API-dependent; download/import fallback is tested. Native OS dialogs require manual acceptance testing.
-- The build retains a non-blocking bundle-size warning. Export sizes are device-limited; the reference board caps exceptionally long text with a continuation notice. Packet camera width defaults to 1920.
-- Preview processes/ports are transient. Discover and verify the current address when a preview is requested; remote Work-browser reachability is not established by local Chrome checks.
+- OBJ is geometry-only, up to 20 MB source / 100,000 triangles. Polygon faces use fan triangulation: triangulate concave faces before importing. Normals are recomputed; materials/textures/smoothing groups are not retained. Duplicates embed independent data and can enlarge project files.
+- Poses are blocking proxies without collision/contact or anatomical joint-limit solving. Plan segments/OBJ projected bounds and camera visibility remain approximations without occlusion analysis.
+- Workspace layouts are local browser preferences, intentionally not portable scene data. Existing desktop minimum width remains 1100 px.
+- Structured rules are automatically checked; free-text constraints still need manual review. Dense labels may overlap. Native file dialogs remain browser/OS-dependent.
+- Production build retains the existing non-blocking bundle-size warning. Export dimensions remain device-limited.
+- Development servers/ports are transient; verify the address when opening a preview. Local browser verification does not establish remote Work-browser reachability.
 
 ## Next recommended task
 
-Manual director acceptance testing with real JUST_BREATHE shots: camera presets/lens composition, optical versus visual focus, light direction, crop and constraint interpretation, AI packet readability, and native Save/Open dialogs. Fix concrete findings before proposing further scope. No subsequent milestone is authorized.
+Manual director acceptance with real shots and modest triangulated OBJ props: pose/placement convenience, floating workspace comfort, composition guides and export readability. Fix concrete findings; no later milestone is authorized.
 
 ## Context map
 
@@ -43,6 +43,7 @@ Manual director acceptance testing with real JUST_BREATHE shots: camera presets/
 - [Project format](docs/PROJECT_FORMAT.md): persistence and compatibility contracts.
 - [AI export](docs/AI_EXPORT.md): outputs, validation boundary and approximations.
 - [Release plan](docs/RELEASE_PLAN.md): Web/GitHub/Tauri strategy.
+- [V0.95 verification](docs/VERIFICATION_V095.md): current targeted tests and limitations.
 - [V0.9 verification](docs/VERIFICATION_V09.md): tests and artifacts.
 
 Invoke `$jingyu-development` with a concrete task. Skill source: `~/.codex/skills/jingyu-development/SKILL.md` (or the configured Codex home). After meaningful work, update completed work, unfinished work, known issues and next recommended task; only label a newer implementation stable after relevant checks pass and it is committed.

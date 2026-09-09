@@ -1,3 +1,6 @@
+import { makePose, poseBounds } from './pose';
+import { objBounds } from './obj';
+import { defaultSpiral } from './spiral';
 import { Box3, Euler, MathUtils, Matrix4, PerspectiveCamera, Quaternion, Vector3 } from 'three';
 import { defaultPlan, defaultAnnotations, defaultFocus, defaultEnvironment, defaultLight, isLight } from '../types';
 import type { ObjectType, Shot, StageObject, Vec3 } from '../types';
@@ -12,11 +15,11 @@ export function cameraRotation(position: Vec3, target: Vec3): Vec3 {
 }
 export function makeObject(type: ObjectType, count = 0): StageObject {
   const position: Vec3 = type === 'Camera' ? [4, 2.8, 7] : type === 'Prop' ? [1.4, 0, 0.6] : [count * 0.5, 0, 0];
-  return { id: crypto.randomUUID(), type, name: type === 'Camera' ? t('storyboardCamera') : `${t(type)}${count ? ` ${count + 1}` : ''}`, semanticName: '', position,
+  return { id: crypto.randomUUID(), type, ...(type === 'Character' ? { pose: makePose() } : {}), name: type === 'Camera' ? t('storyboardCamera') : `${t(type)}${count ? ` ${count + 1}` : ''}`, semanticName: '', position,
     ...(isLight({ type }) ? { light: defaultLight() } : {}), rotation: type === 'Camera' ? cameraRotation(position, [0, 1, 0]) : [0, 0, 0], scale: [1, 1, 1], fov: 45, visible: true, locked: false, frontYaw: 0, frontLabel: type === 'Prop' ? t('interfaceFront') : '' };
 }
 export function makeShot(number: number): Shot {
-  return { id: crypto.randomUUID(), number, aspectRatio: 16 / 9, focus: defaultFocus(), environment: defaultEnvironment(), primaryCharacterId: null, secondarySubjectId: null, backgroundAnchorId: null, hardConstraints: [], includeTechnical: false, title: t('untitledShot'), description: '', status: 'Draft', image: null,
+  return { id: crypto.randomUUID(), number, spiral: defaultSpiral(), useEditorColors: false, aspectRatio: 16 / 9, focus: defaultFocus(), environment: defaultEnvironment(), primaryCharacterId: null, secondarySubjectId: null, backgroundAnchorId: null, hardConstraints: [], includeTechnical: false, title: t('untitledShot'), description: '', status: 'Draft', image: null,
     objects: [makeObject('Camera')], overlays: ['thirds'], spatialDescription: '', plan: defaultPlan(), annotations: defaultAnnotations(), primarySubjectId: null, constraints: '', negativeConstraints: '' };
 }
 export const presets = ['Wide', 'Medium', 'Close', 'Low Angle', 'High Angle'] as const;
@@ -26,7 +29,10 @@ export function presetCamera(name: typeof presets[number], subject: Vec3): Parti
   return { position, rotation: cameraRotation(position, [subject[0], subject[1] + 1, subject[2]]), fov: name === 'Wide' ? 55 : 40 };
 }
 export function localBounds(object: StageObject): Box3 {
+  if(object.type==='Character') return poseBounds(object.pose??makePose());
+  if(object.type==='OBJ' && object.asset) return objBounds(object.asset);
   const dimensions: Record<ObjectType, [Vec3, Vec3]> = {
+    OBJ: [[-.5,0,-.5],[.5,1,.5]],
     Character: [[-0.4, 0, -0.2], [0.4, 1.8, 0.23]], Prop: [[-0.3, 0, -0.3], [0.3, 0.96, 0.3]],
     Cube: [[-0.5, 0, -0.5], [0.5, 1, 0.5]], Sphere: [[-0.5, 0, -0.5], [0.5, 1, 0.5]],
     Cylinder: [[-0.5, 0, -0.5], [0.5, 1, 0.5]], Cone: [[-0.5, 0, -0.5], [0.5, 1, 0.5]],

@@ -1,4 +1,4 @@
-# 镜域 · JingYu 0.9 — Spatial Director
+# 镜域 · JingYu 0.95 — Spatial Director
 
 A local, desktop-oriented storyboard planning application built with React, TypeScript, Vite, Three.js, React Three Fiber, drei, Zustand and Dexie. No backend, accounts, AI service or external assets are needed.
 
@@ -18,6 +18,16 @@ pnpm build
 pnpm preview --port 5173
 ```
 
+
+## V0.95 workflow and blocking
+
+- Select a Character in the Inspector, choose a pose preset, then use Pose Mode to select joint markers and rotate their rings. Numeric joint angles and hip height provide precise blocking; normal object transforms and undo remain available.
+- Set Display Color using swatches or the picker. The adjacent Camera/export checkbox explicitly enables these colors in output; colors are never automatically AI material instructions.
+- Add Object → Import OBJ embeds geometry in the project. Import supports vertices, triangle/convex polygon faces and negative indices, up to 20 MB / 100,000 triangles. MTL/textures and FBX are not supported.
+- Panel headers offer maximize/restore, float/dock and hide. Drag floating headers to move, drag their lower-right grips to resize, and use Reset Layout to restore the current workspace. Each workspace remembers its own layout locally.
+- Enable Golden Spiral under Camera Preview guides; adjust its orientation, mirror, offsets and scale in the Inspector. Settings follow the shot through save/open and Director exports.
+
+Targeted V0.95 checks: `node scripts/verify-v095.cjs` and `node scripts/verify-v095-edges.cjs`, with the same `PLAYWRIGHT_MODULE` / `APP_URL` setup described below. See [V0.95 verification](docs/VERIFICATION_V095.md).
 
 ## V0.9 director workflow
 

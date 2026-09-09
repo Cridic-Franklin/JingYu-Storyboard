@@ -1,3 +1,4 @@
+import { jointMatrices, makePose } from './pose';
 import { Vector3 } from 'three';
 import { isLight, type Shot, type StageObject, type SpatialConstraint, type RelationSpace } from '../types';
 import { framePosition, storyboardCamera, objectMatrix, worldBounds, type FramePosition } from './scene';
@@ -44,8 +45,9 @@ function characterRegion(o: StageObject, shot: Shot): MessageKey | null {
   const cam=shot.objects.find(o=>o.type==='Camera'); if(!cam||!o.visible)return null;
   const camera=storyboardCamera(cam,shot.aspectRatio);
   // Sample proxy-local body centers. These are approximate body bands, never image recognition.
-  const visible=[.4,1.15,1.65].map(y=>{
-    const p=new Vector3(0,y,0).applyMatrix4(objectMatrix(o));
+  const matrices=jointMatrices(o.pose ?? makePose());
+  const visible=[new Vector3(0,-.2,0).applyMatrix4(matrices.leftKnee),new Vector3(0,.27,0).applyMatrix4(matrices.torso),new Vector3().applyMatrix4(matrices.head)].map(local=>{
+    const p=local.applyMatrix4(objectMatrix(o));
     if(p.clone().applyMatrix4(camera.matrixWorldInverse).z>=-.1)return false;p.project(camera);return Math.abs(p.x)<=1&&Math.abs(p.y)<=1;
   });
   return visible.every(Boolean)?'fullBody':visible[2]&&visible[1]?'headTorso':visible[0]&&!visible[2]?'lowerBody':visible[1]||visible[2]?'upperBody':null;
@@ -71,7 +73,7 @@ export function analyzeShot(shot: Shot) {
   const objects=data.objects.map(info=>{
     const object=shot.objects.find(o=>o.id===info.id)!;
     const depthLayer: MessageKey=info.depthMeters===null||info.depthMeters<=0?'positionUnknown':primaryDepth && primaryDepth>0 ? info.depthMeters<primaryDepth*.9?'foreground':info.depthMeters>primaryDepth*1.1?'background':'midground':max-min<.1?'midground':info.depthMeters<=min+(max-min)/3?'foreground':info.depthMeters>=min+2*(max-min)/3?'background':'midground';
-    return {...info,visibility:visibility(info.screen),screenRegion:screenRegion(info.screen),depthLayer,characterRegion:object.type==='Character'?characterRegion(object,shot):null,
+    return {...info, ...(object.type==='Character'?{pose:object.pose??makePose()}:{}), ...(object.asset?{asset:{format:object.asset.format,filename:object.asset.filename}}:{}),visibility:visibility(info.screen),screenRegion:screenRegion(info.screen),depthLayer,characterRegion:object.type==='Character'?characterRegion(object,shot):null,
       relations:reference&&reference.id!==object.id?{subject:{space:'subject',referenceId:reference.id,direction:relation(shot,object,reference,'subject')},screen:{space:'screen',referenceId:reference.id,direction:relation(shot,object,reference,'screen')},distanceMeters:new Vector3(...object.position).distanceTo(new Vector3(...reference.position))}:null};
   });
   return {...data,version:2,shot:{...data.shot,primaryCharacterId:shot.primaryCharacterId,primaryVisualSubjectId:shot.primarySubjectId,secondarySubjectId:shot.secondarySubjectId,backgroundAnchorId:shot.backgroundAnchorId},camera:data.camera?{...data.camera,lensMm:fovToLens(data.camera.verticalFovDegrees),verticalGateMm:24}:null,objects,hardConstraints:shot.hardConstraints,validation:validateConstraints(shot)};
@@ -88,6 +90,7 @@ export function semanticDescription(shot: Shot, language: Language=useSettings.g
   lines.push(`\n${tr('frameComposition')}`);
   for(const o of data.objects.filter(o=>o.visible)){
     const parts=[o.name+':',tr(o.screenRegion),tr(o.visibility.state as MessageKey)];
+    if(o.pose) parts.push(o.pose.basePreset ? `${tr(o.pose.basePreset)} · ${tr('customPose')}` : tr(o.pose.preset));
     if(o.screen.status==='visible')parts.push(tr(o.depthLayer));
     if(o.visibility.crops.length)parts.push(o.visibility.crops.map(trKey=>tr(trKey)).join(', '));
     if(o.characterRegion)parts.push(`${tr(o.characterRegion)} (${tr('approximate')})`);

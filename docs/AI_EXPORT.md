@@ -33,10 +33,18 @@ Packet camera images use 1920 px width; Plan is 1920×1152. ZIP STORE avoids ano
 
 World coordinates use meters, Y-up. Subject relations use the chosen reference object's horizontal semantic facing. Screen origin is top left. Exact near-to-far ordering uses camera-space proxy-center depth. Semantic layers are approximate: with Primary Character, depths within ±10% of its depth are midground, nearer is foreground and farther is background; otherwise thirds of the visible depth span are used.
 
-Projected proxy bounds are not occlusion-tested. Fully/partially/mostly outside labels use viewport intersection over projected bounding-box area (mostly outside means under 25% remains). Crop edges are explicit. Character visible-region hints sample body-band centers and are marked approximate. Raw outside-frame percentages remain in JSON; behind-camera or near-plane crossings report status when projection is unreliable.
+Projected proxy bounds are not occlusion-tested. Fully/partially/mostly outside labels use viewport intersection over projected bounding-box area (mostly outside means under 25% remains). Crop edges are explicit. Character visible-region hints sample posed body centers and are marked approximate. Raw outside-frame percentages remain in JSON; behind-camera or near-plane crossings report status when projection is unreliable.
 
 Optical focus distance refers to an object center or world point. Visual focus regions are normalized image annotations. No physically accurate DOF, gaze detection or constraint solver is involved. Light direction is relative to the explicit Primary Character when available, otherwise explicitly world-relative. Semantic front targeting is approximate direction-to-origin alignment, not contact detection.
 
 ## Validation boundary
 
 Structured rules check subject-space sectors, individual screen axes, camera depth and front orientation. Conflicts or unresolved references trigger Edit Constraint / Ignore-Continue before AI exports; no objects move automatically. Authored free-text hard constraints remain intact and require manual review, clearly disclosed in the UI and export gate. Negative spatial notes are distinct from ordinary image-generation negative prompts.
+
+## V0.95 additions
+
+Character JSON includes preset/base preset, hip height and all joint angles. Concise TXT identifies the preset and whether it was adjusted. Body bounds/visibility use the posed proxy, not the former standing silhouette. OBJ objects participate by stable ID, name, world transform, projected bounds and asset filename/format; AI JSON does not duplicate embedded vertex arrays.
+
+Editor display colors are excluded from object semantics. Camera and Plan PNG export retain their default palette unless the shot's explicit “Use editor colors in Camera / exports” option is enabled. This never adds material/color instructions to TXT or JSON. Director frames use the same adjustable, aspect-aware spiral as the live preview; clean/AI reference frame presets retain their existing guide-selection behavior.
+
+Plan character segments and OBJ projected bounding footprints are approximations, not mesh silhouettes or occlusion analysis.

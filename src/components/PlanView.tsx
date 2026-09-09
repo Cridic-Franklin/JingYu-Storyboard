@@ -1,10 +1,11 @@
+import { PosePlan, ProjectedBounds } from './PosePlan';
 import { isLight } from '../types';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import type { Point2, Shot, Sketch, MeasurePoint, StageObject } from '../types';
 import { useStore } from '../store';
 import { useSettings, type PlanTool } from '../settings';
 import { t, useT } from '../i18n';
-import { localBounds } from '../lib/scene';
+import { worldBounds, localBounds } from '../lib/scene';
 import { measurementPoint, worldFacing } from '../lib/spatial';
 import { Icon } from './Icon';
 
@@ -20,13 +21,13 @@ export function SketchDrawing({ sketch }: { sketch: Sketch }) {
     {sketch.tool === 'arrow' && <path d={`M${b[0] - Math.cos(angle - .5) * arrow},${b[1] - Math.sin(angle - .5) * arrow}L${b[0]},${b[1]}L${b[0] - Math.cos(angle + .5) * arrow},${b[1] - Math.sin(angle + .5) * arrow}`} />}
   </g>;
 }
-export function PlanDrawing({ shot, options = defaultPlanOptions, selectedId, onObjectDown, onRename, labelScale = 1 }: { shot: Shot; options?: PlanOptions; selectedId?: string | null; labelScale?: number; onObjectDown?: (event: PointerEvent<SVGGElement>, object: StageObject) => void; onRename?: (object: StageObject) => void }) {
+export function PlanDrawing({ shot, options = defaultPlanOptions, selectedId, onObjectDown, onRename, labelScale = 1, editorColors = true }: { shot: Shot; options?: PlanOptions; selectedId?: string | null; labelScale?: number; editorColors?: boolean; onObjectDown?: (event: PointerEvent<SVGGElement>, object: StageObject) => void; onRename?: (object: StageObject) => void }) {
   const view = shot.plan.view; const startX = Math.floor(view.x - view.width / 2), startZ = Math.floor(view.z - view.width * .3); const step = view.width > 60 ? 5 : 1;
   const labels: {x:number;z:number;w:number}[]=[];
   return <g fontFamily="Segoe UI, Arial, sans-serif">
     {options.grid && <g stroke="#4a5657" strokeWidth=".015">{Array.from({ length: Math.ceil(view.width / step) + 2 }, (_, i) => <path key={`x${i}`} d={`M${startX + i * step},${startZ - 1}v${view.width}`} />)}{Array.from({ length: Math.ceil(view.width * .6 / step) + 2 }, (_, i) => <path key={`z${i}`} d={`M${startX - 1},${startZ + i * step}h${view.width + 2}`} />)}<path d={`M0,${startZ - 1}v${view.width}M${startX - 1},0h${view.width + 2}`} stroke="#8a8c76" strokeWidth=".025" /></g>}
     {options.scene && shot.objects.filter(o => o.visible).map(o => {
-      const x = o.position[0], z = o.position[2], bounds = localBounds(o); const sx = Math.max(.25, (bounds.max.x - bounds.min.x) * Math.abs(o.scale[0])), sz = Math.max(.25, (bounds.max.z - bounds.min.z) * Math.abs(o.scale[2])); const camera = o.type === 'Camera'; const yaw = worldFacing(o); const selected = o.id === selectedId;
+      const x = o.position[0], z = o.position[2], bounds = worldBounds(o); const sz = Math.max(.25, bounds.max.z - bounds.min.z); const local=localBounds(o),localX=(local.max.x+local.min.x)/2*o.scale[0],localZ=(local.max.z+local.min.z)/2*o.scale[2],localSx=Math.max(.25,(local.max.x-local.min.x)*Math.abs(o.scale[0])),localSz=Math.max(.25,(local.max.z-local.min.z)*Math.abs(o.scale[2])); const camera = o.type === 'Camera'; const yaw = worldFacing(o); const selected = o.id === selectedId;
       const radians = yaw * Math.PI / 180; const forward = [Math.sin(radians), Math.cos(radians)];
       const spread = Math.atan(Math.tan(o.fov * Math.PI / 360) * shot.aspectRatio);
       const labelWidth=Math.max(.5,o.name.length*.16*labelScale);let labelY=-sz/2-.2;
@@ -34,9 +35,9 @@ export function PlanDrawing({ shot, options = defaultPlanOptions, selectedId, on
       labels.push({x,z:z+labelY,w:labelWidth});
       return <g key={o.id} data-plan-object={o.id} transform={`translate(${x} ${z})`} onPointerDown={e => onObjectDown?.(e, o)} onDoubleClick={() => onRename?.(o)} style={{ cursor: o.locked ? 'default' : 'pointer' }}>
         {camera && options.frustum && <path data-frustum={o.id} d={`M0,0L${Math.sin(radians - spread) * 6},${Math.cos(radians - spread) * 6}L${Math.sin(radians + spread) * 6},${Math.cos(radians + spread) * 6}Z`} fill="#ddb5740c" stroke="#d2b57b" strokeWidth=".035" strokeDasharray=".12 .08" pointerEvents="none" />}
-        <g transform={`rotate(${-o.rotation[1]})`} fill={selected ? '#bc9259' : o.type === 'Character' ? '#8ba99e' : o.type === 'Prop' ? '#c68e5c' : '#798b91'} stroke={selected ? '#ffe0a5' : '#c4cbc1'} strokeWidth={selected ? '.06' : '.025'}>
-          {['Character', 'Sphere', 'Cylinder', 'Cone', 'Capsule'].includes(o.type) ? <ellipse rx={sx / 2} ry={sz / 2} /> : <rect x={-sx / 2} y={-sz / 2} width={sx} height={sz} rx=".04" />}
-        </g>
+        {o.type==='Character' ? <g color={(editorColors ? o.displayColor : undefined)??'#8ba99e'} fill={(editorColors ? o.displayColor : undefined)??'#8ba99e'} stroke={selected?'#ffe0a5':'#c4cbc1'} strokeWidth={selected?.06:.025}><PosePlan object={o}/></g> : o.type==='OBJ' ? <g fill={(editorColors ? o.displayColor : undefined)??'#798b91'} stroke={selected?'#ffe0a5':'#c4cbc1'} strokeWidth={selected?.06:.025}><ProjectedBounds object={o}/></g> : <g transform={`rotate(${-o.rotation[1]}) translate(${localX} ${localZ})`} fill={(editorColors ? o.displayColor : undefined) ?? (selected ? '#bc9259' : o.type === 'Prop' ? '#c68e5c' : '#798b91')} stroke={selected ? '#ffe0a5' : '#c4cbc1'} strokeWidth={selected ? '.06' : '.025'}>
+          {['Character', 'Sphere', 'Cylinder', 'Cone', 'Capsule'].includes(o.type) ? <ellipse rx={localSx / 2} ry={localSz / 2} /> : <rect x={-localSx / 2} y={-localSz / 2} width={localSx} height={localSz} rx=".04" />}
+        </g>}
         {(isLight(o) ? options.lightDirections : options.facing) && o.type !== 'PointLight' && <g stroke="#f3d299" strokeWidth=".045" fill="none" pointerEvents="none"><path d={`M0,0L${forward[0] * 1.15},${forward[1] * 1.15}`} /><path d={`M${forward[0] * .9 + forward[1] * .13},${forward[1] * .9 - forward[0] * .13}L${forward[0] * 1.15},${forward[1] * 1.15}L${forward[0] * .9 - forward[1] * .13},${forward[1] * .9 + forward[0] * .13}`} /><text x={forward[0]*1.25} y={forward[1]*1.25} fontSize={.2*labelScale} fill="#f3d299" stroke="none">{t(isLight(o) ? 'lightDirection' : o.type === 'Prop' ? 'frontDirection' : 'facingDirection')}</text></g>}
         {options.names && <g>{labelY < -sz/2-.3 && <path d={`M0,${-sz/2}L0,${labelY}`} stroke="#a7b8ae" strokeWidth=".02" pointerEvents="none" />}<text y={labelY} textAnchor="middle" fontSize={.28 * labelScale} fill="#ecdfc9" stroke="#293132" strokeWidth=".05" paintOrder="stroke" pointerEvents="none">{o.name}</text></g>}
         {shot.plan.showHeights && <text y={sz / 2 + .35} textAnchor="middle" fontSize={.23 * labelScale} fill="#b0c5bd" pointerEvents="none">{t('heightShort', { n: Number(o.position[1].toFixed(2)) })}</text>}
