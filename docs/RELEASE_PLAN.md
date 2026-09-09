@@ -1,18 +1,14 @@
 # Release and platform plan
 
-## Current: 0.3 foundations
+## Current status
 
-The shared scene graph supports synchronized Plan/3D/camera representations, semantic fronts, basic Plan sketches/measurements, camera annotations and individual exports, independent projects and portable files. Existing dark UI, bilingual labels and resizable/maximizable panels are retained.
+See [PROJECT_STATE.md](../PROJECT_STATE.md) for the stable baseline, completed systems and next task.
 
-## Deferred secondary scope
+## V0.9 director workflow
 
-- Secondary subject, detailed camera-target offsets and focus-priority editor.
-- Relative-scale prose and approximate projected-overlap reports (world dimensions are already exported).
-- Blocking/Plan/Composition/Review workspace presets and automatic outliner grouping.
-- ZIP project packaging and a single combined AI Shot Packet action.
-- Recovery-backup browsing UI and native file-handle Save behavior.
+The authorized [V0.9 specification](V09_SPEC.md) has been implemented across P0–P3. Current status, verification and limitations belong in [PROJECT_STATE.md](../PROJECT_STATE.md).
 
-These are deferred under the request to prioritize foundations over advanced metadata and UI polish.
+Optional recent-object shortcuts are not included. Separate sketch-only exports, automatic outliner grouping, projected overlap analysis and ZIP project containers remain future work; they are not required by this V0.9 implementation. Free-text constraints require manual review, while structured rules support automatic validation.
 
 ## Static Web / GitHub Pages
 

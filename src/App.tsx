@@ -1,9 +1,13 @@
+import { WorkspacePresets } from './components/WorkspacePresets';
+import { ValidationSummary } from './components/SpatialRules';
+import { framePreset } from './lib/shotExports';
 import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { useStore } from './store';
 import { useSettings } from './settings';
 import { useT, type MessageKey } from './i18n';
-import type { ObjectType, Overlay, Shot, TransformMode } from './types';
+import type { Overlay, Shot, TransformMode } from './types';
 import { describeScene } from './lib/scene';
+import { AddObjectMenu } from './components/AddObjectMenu';
 import { Icon } from './components/Icon';
 import { CameraPreview, SpatialEditor } from './components/Stage';
 import { CameraPresets, Inspector } from './components/Inspector';
@@ -63,7 +67,6 @@ function SpatialDescription({ shot }: { shot: Shot }) {
   </section>;
 }
 const overlayOptions: Overlay[] = ['thirds', 'cross', 'safe', 'spiral'];
-const objectTypes: ObjectType[] = ['Character', 'Prop', 'Cube', 'Sphere', 'Cylinder', 'Capsule', 'Cone', 'Plane', 'Camera'];
 export default function App() {
   const state = useStore(); const settings = useSettings(); const t = useT();
   const stagePanel = usePanel('stage'), previewPanel = usePanel('preview');
@@ -81,12 +84,12 @@ export default function App() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') { event.preventDefault(); if (current.selectedId) current.duplicateObject(current.selectedId); return; }
       if (event.ctrlKey || event.metaKey) return;
       const modes: Record<string, TransformMode> = { q: 'select', w: 'translate', e: 'rotate', r: 'scale' };
-      if (modes[event.key.toLowerCase()]) { event.preventDefault(); current.setMode(modes[event.key.toLowerCase()]); }
+      if (modes[event.key.toLowerCase()]) { event.preventDefault(); current.setMode(modes[event.key.toLowerCase()]); useSettings.setState({ planTool: 'select' }); }
       if (event.key.toLowerCase() === 'f') { event.preventDefault(); useSettings.getState().frameSelected(); }
-      if (event.key === 'Escape') { current.selectObject(null); useSettings.setState({ maximized: null }); setAddOpen(false); }
+      if (event.key === 'Escape') { current.selectObject(null); useSettings.setState({ maximized: null, focusTool: null }); setAddOpen(false); }
       if ((event.key === 'Delete' || event.key === 'Backspace') && current.selectedId) { event.preventDefault(); current.deleteObject(current.selectedId); }
     }
-    function clickOutside(e: PointerEvent) { if (!addRef.current?.contains(e.target as Node)) setAddOpen(false); }
+    function clickOutside(e: PointerEvent) { if (!addRef.current?.contains(e.target as Node) && !(e.target as Element).closest('.add-menu')) setAddOpen(false); }
     window.addEventListener('keydown', keydown); window.addEventListener('pointerdown', clickOutside);
     return () => { window.removeEventListener('keydown', keydown); window.removeEventListener('pointerdown', clickOutside); };
   }, []);
@@ -103,17 +106,17 @@ export default function App() {
     <div className="workspace"><ShotList shots={state.project.shots} activeId={state.project.activeShotId} /><ResizeHandle dimension="left" panel="shots" />
       <main className="main-workspace">{shot ? <>
         <div className="shot-heading"><div><span className="eyebrow">{t('shot', { n: String(shot.number).padStart(3, '0') })}</span><span className="heading-slash">/</span><h1>{shot.title || t('untitledShot')}</h1><span className={`status-label ${shot.status.toLowerCase()}`}>{t(shot.status)}</span></div><div className="shot-actions"><button title={t('duplicateShot')} onClick={() => state.duplicateShot(shot.id)}><Icon name="copy" size={13} /><span>{t('duplicateShot')}</span></button><button title={t('copyPrevious')} disabled={state.project.shots.findIndex(s => s.id === shot.id) < 1} onClick={() => { if (window.confirm(t('confirmCopy'))) state.copyPreviousScene(); }}><Icon name="layers" size={13} /><span>{t('copyPrevious')}</span></button></div></div>
-        <div className="workspace-tabs">{(['spatial', 'plan', 'camera'] as const).map(view => <button key={view} aria-pressed={settings.workspaceView === view} onClick={() => useSettings.setState({ workspaceView: view })}>{t(view)}</button>)}<ExportControls shot={shot} /></div>
+        <div className="workspace-tabs">{(['spatial', 'plan', 'camera'] as const).map(view => <button key={view} aria-pressed={settings.workspaceView === view} onClick={() => useSettings.setState({ workspaceView: view })}>{t(view)}</button>)}<WorkspacePresets /><ExportControls shot={shot} /></div>
         <section className={`stage-panel${stagePanel.className}`}><div className="stage-toolbar" {...stagePanel.header}><span className="stage-title"><Icon name="Cube" />{settings.workspaceView === 'spatial' ? t('spatialEditor') : t(settings.workspaceView)}</span><div className="transform-modes">{(['select', 'translate', 'rotate', 'scale'] as const).map((mode, i) => <button aria-label={t(mode)} aria-pressed={state.mode === mode} title={`${t(mode)} (${['Q', 'W', 'E', 'R'][i]})`} key={mode} className={state.mode === mode ? 'selected' : ''} onClick={() => { state.setMode(mode); useSettings.setState({ planTool: 'select' }); }}><Icon name={mode} size={14} /><span>{t(mode)}</span><kbd>{['Q', 'W', 'E', 'R'][i]}</kbd></button>)}</div>
-          <div className="add-object-wrap" ref={addRef}><button className="add-object" aria-expanded={addOpen} onClick={() => setAddOpen(v => !v)}><Icon name="plus" size={14} />{t('addObject')}<span>⌄</span></button>{addOpen && <div className="add-menu">{objectTypes.map(type => <button key={type} onClick={() => { state.addObject(type); setAddOpen(false); }}><Icon name={type} />{t(type)}<span>{type === 'Camera' && shot.objects.some(o => o.type === 'Camera') ? t('select') : '+'}</span></button>)}</div>}</div>
-        </div><div className="stage-content">{settings.workspaceView === 'plan' ? <PlanView key={shot.id} shot={shot} /> : settings.workspaceView === 'camera' ? <CameraPreview shot={shot} /> : <SpatialEditor shot={shot} />}{settings.workspaceView === 'spatial' && <><div className="scene-list"><div className="micro-label">{t('scene')}<span>{shot.objects.length}</span></div>{shot.objects.map(object => <div className={`scene-row ${state.selectedId === object.id ? 'active' : ''}`} key={object.id}><button className={`scene-select ${state.selectedId === object.id ? 'active' : ''}`} onClick={() => state.selectObject(object.id)}><Icon name={object.type} size={13} /><span>{object.name || t(object.type)}</span></button><button className="scene-flag" aria-label={t(object.visible ? 'hideObject' : 'showObject', { name: object.name })} title={t(object.visible ? 'visible' : 'hidden')} onClick={() => state.updateObject(object.id, { visible: !object.visible })}><Icon name={object.visible ? 'eye' : 'eyeOff'} size={12} /></button><button className="scene-flag" aria-label={t(object.locked ? 'unlockObject' : 'lockObject', { name: object.name })} title={t(object.locked ? 'locked' : 'unlocked')} onClick={() => state.updateObject(object.id, { locked: !object.locked })}><Icon name={object.locked ? 'lock' : 'unlock'} size={12} /></button></div>)}</div>
+          <div className="add-object-wrap" ref={addRef}><button className="add-object" aria-expanded={addOpen} onClick={() => setAddOpen(v => !v)}><Icon name="plus" size={14} />{t('addObject')}<span>⌄</span></button>{addOpen && <AddObjectMenu onClose={() => setAddOpen(false)} />}</div>
+        </div><div className="stage-content">{settings.workspaceView === 'aiReview' ? <div className="ai-review-grid"><div className="review-camera"><CameraPreview shot={shot} annotations={framePreset(shot,'aiReference').annotations} /></div><div className="review-plan"><PlanView key={shot.id} shot={shot} /></div></div> : settings.workspaceView === 'plan' ? <PlanView key={shot.id} shot={shot} /> : settings.workspaceView === 'camera' ? <CameraPreview shot={shot} /> : <SpatialEditor shot={shot} />}{settings.workspaceView === 'spatial' && <><div className="scene-list"><div className="micro-label">{t('scene')}<span>{shot.objects.length}</span></div>{shot.objects.map(object => <div className={`scene-row ${state.selectedId === object.id ? 'active' : ''}`} key={object.id}><button className={`scene-select ${state.selectedId === object.id ? 'active' : ''}`} onClick={() => state.selectObject(object.id)}><Icon name={object.type} size={13} /><span>{object.name || t(object.type)}</span></button><button className="scene-flag" aria-label={t(object.visible ? 'hideObject' : 'showObject', { name: object.name })} title={t(object.visible ? 'visible' : 'hidden')} onClick={() => state.updateObject(object.id, { visible: !object.visible })}><Icon name={object.visible ? 'eye' : 'eyeOff'} size={12} /></button><button className="scene-flag" aria-label={t(object.locked ? 'unlockObject' : 'lockObject', { name: object.name })} title={t(object.locked ? 'locked' : 'unlocked')} onClick={() => state.updateObject(object.id, { locked: !object.locked })}><Icon name={object.locked ? 'lock' : 'unlock'} size={12} /></button></div>)}</div>
           <div className="viewport-options"><button aria-pressed={settings.showLabels} onClick={settings.toggleLabels}><Icon name="label" size={12} />{t('showLabels')}</button><button aria-label={t('frameSelected')} title={`${t('frameSelected')} (F)`} disabled={!state.selectedId} onClick={settings.frameSelected}><Icon name="frame" size={13} /></button></div></>}
         </div><CameraPresets shot={shot} /></section>
         <ResizeHandle dimension="bottom" panel="stage" />
-        <div className="bottom-panels"><section className={`preview-panel${previewPanel.className}`}><div className="panel-heading" {...previewPanel.header}><Icon name="camera" /><h2>{t('cameraPreview')}</h2><span className="preview-live"><span className="live-dot" />{t('live')}</span></div><CameraPreview shot={shot} /><CameraAnnotationControls shot={shot} /><div className="overlays"><span>{t('guides')}</span>{overlayOptions.map(key => <button aria-pressed={shot.overlays.includes(key)} className={shot.overlays.includes(key) ? 'active' : ''} key={key} onClick={() => state.toggleOverlay(key)}><span className="check-box">{shot.overlays.includes(key) && <Icon name="check" size={9} />}</span>{t(key)}</button>)}</div></section><ResizeHandle dimension="preview" panel="preview" /><SpatialDescription key={shot.id} shot={shot} /></div>
+        <div className="bottom-panels"><section className={`preview-panel${previewPanel.className}`}><div className="panel-heading" {...previewPanel.header}><Icon name="camera" /><h2>{t('cameraPreview')}</h2><span className="preview-live"><span className="live-dot" />{t('live')}</span></div>{settings.workspaceView === 'aiReview' ? <div className="review-validation"><h3>{t('spatialValidation')}</h3><ValidationSummary shot={shot} /></div> : <CameraPreview shot={shot} />}<CameraAnnotationControls shot={shot} /><div className="overlays"><span>{t('guides')}</span>{overlayOptions.map(key => <button aria-pressed={shot.overlays.includes(key)} className={shot.overlays.includes(key) ? 'active' : ''} key={key} onClick={() => state.toggleOverlay(key)}><span className="check-box">{shot.overlays.includes(key) && <Icon name="check" size={9} />}</span>{t(key)}</button>)}</div></section><ResizeHandle dimension="preview" panel="preview" /><SpatialDescription key={shot.id} shot={shot} /></div>
         <StoryboardImage key={shot.id} shot={shot} />
       </> : <div className="empty-workspace"><Icon name="camera" size={48} /><h1>{t('emptyHeading')}</h1><p>{t('emptyHelp')}</p><button className="generate-button" onClick={state.addShot}><Icon name="plus" />{t('createShot')}</button></div>}</main>
       <ResizeHandle dimension="right" panel="inspector" /><Inspector shot={shot} />
-    </div><footer className="app-footer"><span><span className="live-dot" />{shot ? t('objectCount', { n: shot.objects.length }) : t('noShot')}</span><span>{t('shortcuts')}</span><span>{t('fullBrand')}<b>0.3</b></span></footer>
+    </div><footer className="app-footer"><span><span className="live-dot" />{shot ? t('objectCount', { n: shot.objects.length }) : t('noShot')}</span><span>{t('shortcuts')}</span><span>{t('fullBrand')}<b>0.9</b></span></footer>
   </div>;
 }

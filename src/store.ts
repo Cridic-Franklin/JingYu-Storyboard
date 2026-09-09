@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { defaultPlan } from './types';
+import { defaultPlan, isLight } from './types';
 import type { PlanData, ObjectType, Overlay, Project, Shot, StageObject, TransformMode } from './types';
 import { makeObject, makeShot } from './lib/scene';
 import { t } from './i18n';
@@ -33,13 +33,14 @@ function persist(project: Project) {
     if (current === revision) useStore.setState({ saveStatus: 'error', error: error instanceof Error ? error.message : String(error) });
   });
 }
-const emptyProject: Project = { id: 'local-project', shots: [], activeShotId: null, nextShotNumber: 1, schemaVersion: 3, name: 'Untitled project', updatedAt: new Date().toISOString() };
+const emptyProject: Project = { id: 'local-project', shots: [], activeShotId: null, nextShotNumber: 1, schemaVersion: 4, name: 'Untitled project', updatedAt: new Date().toISOString() };
 function cloneScene(shot: Shot) {
   const ids = new Map(shot.objects.map(o => [o.id, crypto.randomUUID()]));
   const plan = structuredClone(shot.plan ?? defaultPlan());
   plan.sketches.forEach(s => { s.id = crypto.randomUUID(); });
   plan.measurements.forEach(m => { m.id = crypto.randomUUID(); for (const p of [m.a, m.b]) if (p.objectId) p.objectId = ids.get(p.objectId); });
-  return { objects: shot.objects.map(o => ({ ...structuredClone(o), id: ids.get(o.id)! })), plan, primarySubjectId: shot.primarySubjectId ? ids.get(shot.primarySubjectId) ?? null : null };
+  const focus = structuredClone(shot.focus); focus.targetId = focus.targetId ? ids.get(focus.targetId) ?? null : null;
+  return { primaryCharacterId: ids.get(shot.primaryCharacterId ?? '') ?? null, secondarySubjectId: ids.get(shot.secondarySubjectId ?? '') ?? null, backgroundAnchorId: ids.get(shot.backgroundAnchorId ?? '') ?? null, hardConstraints: shot.hardConstraints.map(c => ({ ...c, id: crypto.randomUUID(), objectId: ids.get(c.objectId) ?? c.objectId, referenceId: ids.get(c.referenceId) ?? c.referenceId })), includeTechnical: shot.includeTechnical, focus, environment: structuredClone(shot.environment), aspectRatio: shot.aspectRatio, objects: shot.objects.map(o => ({ ...structuredClone(o), id: ids.get(o.id)! })), plan, primarySubjectId: shot.primarySubjectId ? ids.get(shot.primarySubjectId) ?? null : null };
 }
 let hydration: Promise<void> | undefined;
 export const useStore = create<State>((set, get) => {
@@ -71,7 +72,7 @@ export const useStore = create<State>((set, get) => {
     openProject: project => switchProject(migrateProject(project)),
     openRecent: async id => { const project = await projectStorage.load(id); if (project) await switchProject(project); },
     saveProject: async () => { get().endTransaction(); await saveQueue; await projectStorage.exportProject(get().project); },
-    saveAs: async name => { const project = { ...structuredClone(get().project), id: crypto.randomUUID(), name: name.trim() || get().project.name, updatedAt: new Date().toISOString() }; await switchProject(project); await projectStorage.exportProject(project); },
+    saveAs: async name => { const project = { ...structuredClone(get().project), id: crypto.randomUUID(), name: name.trim() || get().project.name, updatedAt: new Date().toISOString() }; get().endTransaction(); await saveQueue; if (!get().recovery && get().saveStatus === 'error') throw new Error(t('saveBeforeSwitch')); if (await projectStorage.exportProject(project)) await switchProject(project); },
     updatePlan: patch => editShot(s => ({ ...s, plan: { ...s.plan, ...patch } })),
     duplicateObject: id => {
       const s = get().project.shots.find(s => s.id === get().project.activeShotId); const source = s?.objects.find(o => o.id === id);
@@ -136,18 +137,18 @@ export const useStore = create<State>((set, get) => {
       const camera = shot.objects.find(o => o.type === 'Camera');
       if (type === 'Camera' && camera) { set({ selectedId: camera.id }); return; }
       const object = makeObject(type, shot.objects.filter(o => o.type === type).length);
-      editShot(s => ({ ...s, objects: [...s.objects, object], spatialDescription: '' })); set({ selectedId: object.id });
+      editShot(s => ({ ...s, environment: isLight(object) ? { ...s.environment, defaultRig: false } : s.environment, objects: [...s.objects, object], spatialDescription: '' })); set({ selectedId: object.id });
     },
     updateObject: (id, patch) => {
       const object = get().project.shots.find(s => s.id === get().project.activeShotId)?.objects.find(o => o.id === id);
-      if (!object || (object.locked && ['position', 'rotation', 'scale', 'fov', 'frontYaw'].some(k => k in patch))) return;
+      if (!object || (object.locked && ['position', 'rotation', 'scale', 'fov', 'frontYaw', 'light'].some(k => k in patch))) return;
       const { id: ignoredId, type: ignoredType, ...safePatch } = patch; void ignoredId; void ignoredType;
       editShot(shot => ({ ...shot, objects: shot.objects.map(o => o.id === id ? { ...o, ...safePatch } : o), spatialDescription: '' }));
     },
     deleteObject: id => {
       const object = get().project.shots.find(s => s.id === get().project.activeShotId)?.objects.find(o => o.id === id);
       if (!object || object.locked) return;
-      get().endTransaction(); editShot(shot => ({ ...shot, objects: shot.objects.filter(o => o.id !== id), primarySubjectId: shot.primarySubjectId === id ? null : shot.primarySubjectId, plan: { ...shot.plan, measurements: shot.plan.measurements.map(m => ({ ...m, a: m.a.objectId === id ? { position: [...object.position] } : m.a, b: m.b.objectId === id ? { position: [...object.position] } : m.b })) }, spatialDescription: '' })); set({ selectedId: null });
+      get().endTransaction(); editShot(shot => ({ ...shot, objects: shot.objects.filter(o => o.id !== id), primaryCharacterId: shot.primaryCharacterId === id ? null : shot.primaryCharacterId, secondarySubjectId: shot.secondarySubjectId === id ? null : shot.secondarySubjectId, backgroundAnchorId: shot.backgroundAnchorId === id ? null : shot.backgroundAnchorId, focus: { ...shot.focus, targetId: shot.focus.targetId === id ? null : shot.focus.targetId }, primarySubjectId: shot.primarySubjectId === id ? null : shot.primarySubjectId, plan: { ...shot.plan, measurements: shot.plan.measurements.map(m => ({ ...m, a: m.a.objectId === id ? { position: [...object.position] } : m.a, b: m.b.objectId === id ? { position: [...object.position] } : m.b })) }, spatialDescription: '' })); set({ selectedId: null });
     },
     selectObject: selectedId => set({ selectedId }), setMode: mode => set({ mode }),
     toggleOverlay: overlay => editShot(s => ({ ...s, overlays: s.overlays.includes(overlay) ? s.overlays.filter(o => o !== overlay) : [...s.overlays, overlay] })),

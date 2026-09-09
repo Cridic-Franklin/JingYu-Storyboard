@@ -1,4 +1,4 @@
-# 镜域 · JingYu 0.3 — Spatial Director
+# 镜域 · JingYu 0.9 — Spatial Director
 
 A local, desktop-oriented storyboard planning application built with React, TypeScript, Vite, Three.js, React Three Fiber, drei, Zustand and Dexie. No backend, accounts, AI service or external assets are needed.
 
@@ -19,23 +19,19 @@ pnpm preview --port 5173
 ```
 
 
-## 0.3 foundation workflow
+## V0.9 director workflow
 
-The existing V0.2 workspace is preserved. **Spatial 3D**, **Plan View** and **Camera View** use one shared scene graph.
+1. Use File to create/open a `.jyproject` or choose a recent local project. Save reuses a supported browser file handle; Save As chooses a new file and independent local project. Other browsers download portable copies.
+2. Set the shot Aspect Ratio in the Inspector; it changes camera projection, guides, calculations and export dimensions.
+3. Search Add Object in English or Chinese. Numeric fields allow draft negative/decimal text, Enter/blur to commit, Esc to cancel, and Arrow/Shift/Ctrl increments.
+4. Position the same objects in Spatial 3D and Plan View. Use compact Shot Size, Camera Angle and Lens menus, or edit camera values directly.
+5. Choose Primary Character and Primary Visual Subject independently. Set optical Focus Target or a world/camera-picked point; draw a rectangle/ellipse for visual emphasis.
+6. Add directional/point/spot lights and adjust the environment. Planning arrows show facing/front/light direction. Sketches and anchored measurements remain annotations.
+7. Add structured Hard Spatial Constraints for automatic validation; retain free-text director notes and separate spatial DO NOT notes. Generate concise semantic descriptions; technical percentages are optional.
+8. Choose Blocking, Plan, Composition or AI Review workspace. Review the camera, Plan, description and validation together.
+9. Export Clean / Director / AI frames, Plan, TXT/JSON, the six-file AI Shot Packet or single AI Reference Board.
 
-1. Open the **Project** menu to open a `.jyproject`, choose a recent project, or create a new independent project.
-2. Switch to **Plan View**. Add and rename objects with the existing toolbar and Inspector. W-drag changes X/Z without changing height Y; E-drag rotates. Position and rotation snaps default to Off. Ctrl+D duplicates the selected non-camera object. Double-click an object to rename it.
-3. Configure a prop's **Front meaning / label** and **Front offset** in the Inspector. Its Plan arrow, preview annotations, description and JSON use the same semantic direction. Camera frusta respond to FOV.
-4. Use **Measure** to pick two points. Nearby visible object origins snap automatically, and anchored distances update when objects move. Use Pen, Marker, Arrow or Text to add separate director sketches. Eraser removes strokes; Clear Sketch and Clear Measurements are undoable. Toggle the Scene, Measurements and Sketch layers independently.
-5. Switch back to Spatial 3D and move objects normally. Plan View and the camera preview update automatically. There is no separate synchronization step.
-6. In Camera Preview's **Annotations** menu, choose names, types, facing/front arrows, coordinates, bounds and measurements. These are overlays, not 3D geometry. Use Camera View or maximize for a larger image.
-7. Optionally set a primary subject and spatial/negative constraints in Shot Details. After **Generate Spatial Description**, the description remains live as the scene changes.
-8. Use **Export Camera Frame** for clean, director or AI-reference PNG presets, then customize each checkbox. Resolutions include 1080p, 1440p, 4K and custom 16:9 widths. **Copy Image** uses the same export settings, with PNG download as fallback. **Export Plan View**, **Export Spatial JSON** and **Export Spatial Text** provide the individual files for a future AI Shot Packet.
-9. **Save** downloads a portable project copy. **Save As** makes an independent named project and downloads it. **Open Project** restores all shots, objects, images, sketches, measurements and constraints into a fresh local project ID. Autosave continues independently.
-
-Plan navigation: middle-drag or Alt-drag pans, wheel zooms, F frames the selected object. Plan measurements are true 3D endpoint distances; the displayed angle is planar. The single storyboard camera per shot is retained, so object duplication excludes cameras.
-
-The `.jyproject` foundation format is self-contained UTF-8 JSON with embedded images, not ZIP yet. See [project format](docs/PROJECT_FORMAT.md), [architecture](docs/ARCHITECTURE.md), [AI exports](docs/AI_EXPORT.md) and [release plan](docs/RELEASE_PLAN.md). Advanced focus metadata, overlap reports, workspace presets and combined ZIP packets are explicitly deferred.
+Read [project state](PROJECT_STATE.md), [architecture](docs/ARCHITECTURE.md), [project format](docs/PROJECT_FORMAT.md), [AI exports](docs/AI_EXPORT.md) and [release plan](docs/RELEASE_PLAN.md) as needed. No AI generation, modeling, animation, cloud, deployment or Tauri runtime was added.
 
 ## Original blocking workflow
 
@@ -43,8 +39,8 @@ The `.jyproject` foundation format is self-contained UTF-8 JSON with embedded im
 2. Choose **Add object → Character**, then enter **Leo** in the inspector's Display Name field.
 3. Choose **Add object → Prop**, then enter **Emergency Beacon** as its Display Name. Existing semantic-name data is retained for compatibility; descriptions prefer Display Name.
 4. Select an object on the stage or in the scene list. Use the transform handles or inspector fields to move, rotate and scale it.
-5. Select the camera to edit its position, rotation and vertical FOV. Camera presets frame the first character, or the origin if the shot has no character.
-6. Watch the 16:9 camera preview and toggle composition guides, including Golden Spiral.
+5. Select the camera to edit its position, rotation and vertical FOV. Camera presets prefer Primary Character, then Primary Visual Subject, with a visible-character/origin fallback for framing.
+6. Watch the camera preview and toggle composition guides, including Golden Spiral.
 7. Choose **Generate Spatial Description**, then **Copy**. After generation, scene edits update the description live.
 8. Import a local PNG, JPEG, WebP or GIF (up to 10 MB). The image appears in the shot card; click the reference to replace it or use its trash button to remove it.
 9. Edit the shot title, short description and Draft/Approved status in **Shot details** in the right inspector. Wait for **All changes saved** before closing or refreshing.
@@ -69,7 +65,7 @@ The `.jyproject` foundation format is self-contained UTF-8 JSON with embedded im
 - Eye and lock buttons are available in the scene list and Inspector. Hidden objects are excluded from the stage, preview and generated descriptions. Hiding the camera hides only its editor proxy. Locked objects cannot be transformed, deleted or repositioned by camera presets until unlocked.
 - **Duplicate Shot** inserts a copy immediately after the source, with a new shot number and fresh object IDs. It copies camera, transforms, names, visibility, locks, guides, image, shot description and status. Generated spatial text is cleared so its shot number can be regenerated. Editing a copy never changes its source.
 - **Copy Scene From Previous Shot** copies objects and the camera from the preceding card in the shot list into the current shot. The current shot's title, image, status and guides stay unchanged. Replacement can be undone.
-- **Frame Position** reports approximate projected center X/Y and bounding width/height as percentages of the 16:9 preview. The top-left corner is (0%, 0%); X increases rightward and Y downward. Bounds are measured before occlusion and are not clipped to the frame, so partially visible objects can have centers outside 0–100% and bounds above 100%. Hidden, offscreen, behind-camera and near-plane cases show a status instead of misleading coordinates.
+- **Frame Position** reports approximate projected center X/Y and bounding width/height as percentages of the active shot preview. The top-left corner is (0%, 0%); X increases rightward and Y downward. Bounds are measured before occlusion and are not clipped to the frame, so partially visible objects can have centers outside 0–100% and bounds above 100%. Hidden, offscreen, behind-camera and near-plane cases show a status instead of misleading coordinates.
 
 ## Local storage
 
@@ -79,28 +75,18 @@ Version 0.1 projects are upgraded on load with Visible=true and Locked=false. Ex
 
 ## Architecture
 
-- `src/types.ts`: scene and project types.
-- `src/store.ts`: Zustand actions and ordered Dexie persistence.
-- `src/lib/scene.ts`: primitive bounds, camera presets, projection percentages and deterministic bilingual descriptions.
-- `src/i18n.ts`: centralized English and Simplified Chinese messages.
-- `src/settings.ts`: persisted language, labels and layout preferences.
-- `src/components/Layout.tsx`: draggable panel borders and maximize behavior.
-- `src/components/ViewportNavigation.tsx`: Maya-style navigation and frame selected.
-- `src/components/Stage.tsx`: editor, transform handles, camera preview and SVG overlays.
-- `src/components/Inspector.tsx`: editable object and shot properties.
-- `src/App.tsx`: shot list, image import, description and workspace layout.
-- `src/styles.css`: compact desktop production interface.
+See [the module map and architectural contracts](docs/ARCHITECTURE.md).
 
 ## Verification
 
-`pnpm build` runs strict TypeScript checks and builds production assets. `scripts/verify.cjs` is a real-browser workflow check using an existing Playwright installation and Google Chrome. It adds no dependencies to the application. With the dev server running, set `PLAYWRIGHT_MODULE` to the installed Playwright module path if it is not resolvable, then run:
+`pnpm build` runs TypeScript project checks and builds production assets. The V0.9 browser scripts use Playwright and Chrome with fresh profiles; no testing dependency was added to the application. Set `PLAYWRIGHT_MODULE` if using an external installation, and `APP_URL` to the actual Vite address.
 
 ```sh
-node scripts/verify.cjs
-node scripts/verify-v02.cjs
-node scripts/verify-foundations.cjs
-node scripts/verify-storage.cjs
+node scripts/verify-v09-p0.cjs
+node scripts/verify-v09-camera.cjs
+node scripts/verify-v09-semantics.cjs
+node scripts/verify-v09-storage.cjs
+node scripts/verify-v09-export.cjs
 ```
 
-The tests use fresh browser contexts. They cover original workflows plus bilingual persistence, primitives, visibility/locking, stable IDs, grouped undo/redo, viewport navigation, panel resizing/maximization, shot copying, screen coordinates and 0.1 migration. Screenshots are written to `.verification/`.
-
+Run P0 before the export integration test: it creates the portable fixture in `.verification/`. Other tests are independent. See [V0.9 verification](docs/VERIFICATION_V09.md) for coverage and limits. Older scripts and [the V0.3 record](docs/VERIFICATION.md) remain historical evidence; their old preset/UI/description expectations are not the V0.9 acceptance workflow.

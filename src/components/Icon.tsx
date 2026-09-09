@@ -1,5 +1,8 @@
 export function Icon({ name, size = 16 }: { name: string; size?: number }) {
   const paths: Record<string, React.ReactNode> = {
+    DirectionalLight: <><circle cx="9" cy="9" r="4" /><path d="M9 1v2M1 9h2M3 3l2 2M13 13l8 8M15 9l7 7M9 15l7 7" /></>,
+    PointLight: <><circle cx="12" cy="12" r="4" /><path d="M12 1v4M12 19v4M1 12h4M19 12h4M4 4l3 3M17 17l3 3M4 20l3-3M17 7l3-3" /></>,
+    SpotLight: <><path d="M3 3h7l4 7-4 4-7-4zM14 10l8 10-2 2-10-8" /><path d="M18 13l4-2M13 18l-2 4" /></>,
     select: <path d="m5 3 15 9-7 2-3 7z" />,
     eye: <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z" /><circle cx="12" cy="12" r="3" /></>,
     eyeOff: <><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z M3 3l18 18" /></>,

@@ -1,0 +1,38 @@
+const {chromium}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
+const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
+(async()=>{
+ const browser=await chromium.launch({channel:'chrome',headless:true,args:['--enable-unsafe-swiftshader','--use-angle=swiftshader']});
+ const context=await browser.newContext({viewport:{width:1600,height:1100},acceptDownloads:true});
+ await context.addInitScript(()=>{window.showOpenFilePicker=undefined;window.showSaveFilePicker=undefined;});
+ const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.type()==='error')errors.push(m.text());});
+ const button=name=>page.getByRole('button',{name,exact:name!=='Add object'});
+ const state=()=>page.evaluate(async()=>{const s=(await import(performance.getEntriesByType('resource').find(e=>e.name.includes('/src/store.ts'))?.name || '/src/store.ts')).useStore.getState();return s.project.shots.find(o=>o.id===s.project.activeShotId)});
+ const field=name=>page.getByRole('textbox',{name,exact:name!=='Add object'});
+ const fill=async(name,value)=>{await field(name).fill(value);await field(name).press('Enter');};
+ const saved=()=>page.getByRole('status').filter({hasText:'All changes saved'}).waitFor();
+ await page.goto(process.env.APP_URL||'http://127.0.0.1:5173/');await saved();
+ await button('Add object').click();await page.getByRole('searchbox',{name:'Search objects'}).fill('角色');await page.locator('.add-menu').getByRole('button',{name:/Character/}).click();await fill('Object name','Leo');
+ const id=(await state()).objects.find(o=>o.name==='Leo').id;
+ await field('Position X').fill('-');assert.equal((await state()).objects.find(o=>o.id===id).position[0],0);
+ await field('Position X').fill('-2.');assert.equal(await field('Position X').inputValue(),'-2.');
+ await field('Position X').fill('-2.5');await field('Position X').press('Enter');assert.equal((await state()).objects.find(o=>o.id===id).position[0],-2.5);
+ await field('Position X').fill('99');await field('Position X').press('Escape');assert.equal((await state()).objects.find(o=>o.id===id).position[0],-2.5);
+ await field('Position X').focus();await page.keyboard.press('ArrowUp');await page.keyboard.press('Shift+ArrowUp');await page.keyboard.press('Control+ArrowDown');await field('Position X').press('Enter');assert(Math.abs((await state()).objects.find(o=>o.id===id).position[0]+1.41)<1e-8);
+ await page.keyboard.press('Control+z');assert.equal((await state()).objects.find(o=>o.id===id).position[0],-2.5);
+ await page.getByLabel('Aspect Ratio',{exact:true}).selectOption('2.39:1');assert.equal((await state()).aspectRatio,2.39);
+ await button('Add object').click();await page.getByRole('searchbox').fill('Prop');await page.locator('.add-menu').getByRole('button',{name:/Prop/}).click();await fill('Object name','Emergency Beacon');
+ const beacon=(await state()).objects.find(o=>o.name==='Emergency Beacon');
+ await page.getByLabel('Focus Target',{exact:true}).selectOption(beacon.id);assert(await page.getByTestId('focus-distance').isVisible());
+ await button('Rectangle').click();const frame=page.locator('.stage-content').getByTestId('camera-preview');const b=await frame.boundingBox();await page.mouse.move(b.x+b.width*.2,b.y+b.height*.2);await page.mouse.down();await page.mouse.move(b.x+b.width*.45,b.y+b.height*.55,{steps:8});await page.mouse.up();assert((await state()).focus.region.width>.2);await fill('Focus region meaning','Beacon interface');
+ await page.getByLabel('Lens Preset',{exact:true}).selectOption('35');await page.getByLabel('Camera Angle',{exact:true}).selectOption('lowAngle');await page.getByLabel('Shot Size',{exact:true}).selectOption('mediumShot');
+ await button('Add object').click();await page.getByRole('searchbox').fill('聚光');await page.locator('.add-menu').getByRole('button',{name:/Spot Light/}).click();await fill('Intensity','12.5');await fill('Cone angle (degrees)','55');await fill('Position Y','3.25');
+ const light=(await state()).objects.find(o=>o.type==='SpotLight');assert.equal(light.light.intensity,12.5);assert.equal((await state()).environment.defaultRig,false);
+ await button('Plan View').click();assert(await page.locator(`[data-plan-object="${light.id}"]`).isVisible());
+ const result=await page.evaluate(async()=>{const s=(await import(performance.getEntriesByType('resource').find(e=>e.name.includes('/src/store.ts'))?.name || '/src/store.ts')).useStore.getState();const shot=s.project.shots.find(o=>o.id===s.project.activeShotId);const {cameraPNG}=await import(performance.getEntriesByType('resource').find(e=>e.name.includes('/src/lib/export.tsx'))?.name || '/src/lib/export.tsx');const {defaultAnnotations}=await import('/src/types.ts');const blob=await cameraPNG(shot,640,defaultAnnotations(),['thirds']);const bitmap=await createImageBitmap(blob);return [bitmap.width,bitmap.height];});assert.deepEqual(result,[640,268]);
+ await page.locator('.project-menu-button').click();await field('Project name').fill('V09_P0');const download=page.waitForEvent('download');await page.getByRole('dialog').getByRole('button',{name:'Save As',exact:true}).click();const out=await download;await out.saveAs(path.resolve('.verification/V09_P0.jyproject'));await saved();const before=await state();
+ await page.locator('.project-menu-button').click();await field('Project name').fill('Independent');await page.getByRole('dialog').getByRole('button',{name:'New Project',exact:true}).click();await saved();
+ await page.locator('.project-menu-button').click();const chooser=page.waitForEvent('filechooser');await page.getByRole('dialog').getByRole('button',{name:'Open Project',exact:true}).click();await(await chooser).setFiles(path.resolve('.verification/V09_P0.jyproject'));await saved();assert.deepEqual(await state(),before);
+ await page.reload();await saved();assert.deepEqual(await state(),before);assert.deepEqual(errors,[]);
+ await page.screenshot({path:'.verification/v09-p0.png'});console.log('PASS P0: bilingual object search, draft-safe numbers, increments/undo, shot ratio projection/export, presets, focus region/target, lights, shared Plan objects, portable round-trip and reload.');await browser.close();
+})().catch(e=>{console.error(e);process.exit(1)});
+

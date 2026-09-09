@@ -1,13 +1,16 @@
-import { Component, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { isLight } from '../types';
+import { FocusDrawing, FocusInteraction } from './FocusOverlay';
+import { ratioLabel } from '../lib/camera';
+import { Component, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Grid, Html, TransformControls } from '@react-three/drei';
-import { Group, MathUtils, PerspectiveCamera, Vector2 } from 'three';
+import { Group, MathUtils, PerspectiveCamera, Vector2, Object3D } from 'three';
 import { localBounds, toRadians } from '../lib/scene';
 import { useSettings } from '../settings';
 import { t, useT } from '../i18n';
 import { ViewportNavigation } from './ViewportNavigation';
 import { useStore } from '../store';
-import type { Shot, StageObject, Vec3 } from '../types';
+import type { Shot, StageObject, Vec3, CameraAnnotations } from '../types';
 import { Icon } from './Icon';
 import { registerCapture } from '../lib/export';
 import { CameraOverlayContent } from './CameraOverlay';
@@ -21,6 +24,7 @@ class ViewErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
 function Geometry({ object, selected = false }: { object: StageObject; selected?: boolean }) {
   const color = selected ? '#e5b574' : object.type === 'Character' ? '#a0b6af' : object.type === 'Prop' ? '#ca8b58' : '#8c969c';
   const material = <meshStandardMaterial color={color} roughness={0.75} emissive={selected ? '#503714' : '#000000'} emissiveIntensity={0.25} />;
+  if (isLight(object)) return <group><mesh><sphereGeometry args={[.17,12,8]} /><meshBasicMaterial color={object.light?.color ?? '#ffe5a0'} /></mesh>{object.type !== 'PointLight' && <group rotation={[Math.PI/2,0,0]}><mesh position={[0,.55,0]}><cylinderGeometry args={[.025,.025,1,8]} /><meshBasicMaterial color="#e9cf85" /></mesh><mesh position={[0,1.1,0]}><coneGeometry args={[.12,.25,8]} /><meshBasicMaterial color="#e9cf85" /></mesh></group>}</group>;
   if (object.type === 'Character') return <group>
     <mesh position={[0, 1.62, 0]} castShadow><sphereGeometry args={[0.15, 20, 16]} />{material}</mesh>
     <mesh position={[0, 1.63, 0.145]}><boxGeometry args={[0.13, 0.045, 0.045]} /><meshStandardMaterial color="#374840" /></mesh>
@@ -82,20 +86,28 @@ function EditableObject({ object }: { object: StageObject }) {
   </>;
 }
 
-function Lighting() {
-  return <><ambientLight intensity={1.1} /><hemisphereLight args={['#d6e5ed', '#494239', 1.5]} /><directionalLight position={[4, 9, 6]} intensity={2.5} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-15} shadow-camera-right={15} shadow-camera-top={15} shadow-camera-bottom={-15} shadow-bias={-0.001} /></>;
+function SceneLight({ object }: { object: StageObject }) {
+  const target = useMemo(() => new Object3D(), []), light = object.light!;
+  return <group position={object.position} rotation={toRadians(object.rotation)}><primitive object={target} position={[0,0,1]} />
+  {object.type === 'DirectionalLight' ? <directionalLight target={target} intensity={light.intensity} color={light.color} castShadow={light.castShadow} shadow-mapSize={[1024,1024]} shadow-camera-left={-15} shadow-camera-right={15} shadow-camera-top={15} shadow-camera-bottom={-15} shadow-bias={-.001} /> : object.type === 'SpotLight' ? <spotLight target={target} intensity={light.intensity} color={light.color} distance={light.range} angle={light.coneAngle*Math.PI/360} castShadow={light.castShadow} /> : <pointLight intensity={light.intensity} color={light.color} distance={light.range} castShadow={light.castShadow} />}</group>;
+}
+function Lighting({ shot }: { shot: Shot }) {
+  return <><ambientLight intensity={shot.environment.intensity} color={shot.environment.color} />{shot.environment.defaultRig && <DefaultRig />}{shot.objects.filter(o => o.visible && isLight(o) && o.light).map(o => <SceneLight key={o.id} object={o} />)}</>;
+}
+function DefaultRig() {
+  return <><hemisphereLight args={['#d6e5ed', '#494239', 1.5]} /><directionalLight position={[4, 9, 6]} intensity={2.5} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-15} shadow-camera-right={15} shadow-camera-top={15} shadow-camera-bottom={-15} shadow-bias={-0.001} /></>;
 }
 function Ground({ editor = false }: { editor?: boolean }) {
   return <><mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color={editor ? '#303538' : '#535b5b'} roughness={1} /></mesh>
     {editor && <Grid infiniteGrid cellSize={1} sectionSize={5} cellThickness={0.55} sectionThickness={0.9} cellColor="#555e61" sectionColor="#768078" fadeDistance={40} fadeStrength={1.5} position={[0, 0.002, 0]} />}</>;
 }
-function PreviewCamera({ cameraObject }: { cameraObject: StageObject }) {
+function PreviewCamera({ cameraObject, aspect }: { cameraObject: StageObject; aspect: number }) {
   const { camera } = useThree();
   useLayoutEffect(() => {
     const cam = camera as PerspectiveCamera;
     cam.position.fromArray(cameraObject.position); cam.rotation.set(...toRadians(cameraObject.rotation));
-    cam.fov = cameraObject.fov; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
-  }, [camera, cameraObject]);
+    cam.aspect = aspect; cam.fov = cameraObject.fov; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+  }, [camera, cameraObject, aspect]);
   return null;
 }
 function CaptureBridge({ shotId }: { shotId: string }) {
@@ -117,7 +129,7 @@ export function SpatialEditor({ shot }: { shot: Shot }) {
   return <div className="editor-canvas">
     <ViewErrorBoundary><Canvas key={`${shot.id}-${viewKey}`} shadows dpr={[1, 1.6]} camera={{ position: [8, 6, 10], fov: 48, near: 0.1, far: 200 }} onPointerMissed={event => { if (event.type === 'click' && !event.altKey) useStore.getState().selectObject(null); }}>
       <color attach="background" args={['#303538']} /><fog attach="fog" args={['#303538', 30, 75]} />
-      <Lighting /><Ground editor />
+      <Lighting shot={shot} /><Ground editor />
       {shot.objects.map(o => <EditableObject key={o.id} object={o} />)}
       <ViewportNavigation />
     </Canvas></ViewErrorBoundary>
@@ -128,18 +140,19 @@ export function SpatialEditor({ shot }: { shot: Shot }) {
     <div className="viewport-scale">{t('unit')}</div>
   </div>;
 }
-export function CameraPreview({ shot }: { shot: Shot }) {
-  const t = useT();
+export function CameraPreview({ shot, annotations }: { shot: Shot; annotations?: CameraAnnotations }) {
+  const t = useT(); const frameRef = useRef<HTMLDivElement>(null); const [frameWidth,setFrameWidth]=useState(1600);
+  useLayoutEffect(()=>{const observer=new ResizeObserver(entries=>setFrameWidth(entries[0].contentRect.width));if(frameRef.current)observer.observe(frameRef.current);return()=>observer.disconnect();},[]);
   const camera = shot.objects.find(o => o.type === 'Camera');
-  return <div className="preview-surround"><div className="preview-frame" data-testid="camera-preview">
+  return <div className="preview-surround"><div ref={frameRef} className="preview-frame" data-testid="camera-preview" style={{ '--shot-aspect': shot.aspectRatio } as CSSProperties}>
     {camera ? <ViewErrorBoundary><Canvas shadows gl={{ preserveDrawingBuffer: true }} dpr={[1, 1.6]} camera={{ fov: camera.fov, near: 0.1, far: 200 }}>
-      <color attach="background" args={['#747e7e']} /><fog attach="fog" args={['#747e7e', 25, 90]} /><Lighting /><Ground />
-      <PreviewCamera cameraObject={camera} /><CaptureBridge shotId={shot.id} />
-      {shot.objects.filter(o => o.type !== 'Camera' && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} /></group>)}
+      <color attach="background" args={['#747e7e']} /><fog attach="fog" args={['#747e7e', 25, 90]} /><Lighting shot={shot} /><Ground />
+      <PreviewCamera aspect={shot.aspectRatio} cameraObject={camera} /><CaptureBridge shotId={shot.id} />
+      {shot.objects.filter(o => o.type !== 'Camera' && !isLight(o) && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} /></group>)}
     </Canvas></ViewErrorBoundary> : <div className="empty-state">{t('missingCamera')}</div>}
-    {camera && <svg className="composition-overlay" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-label={t('compositionGuides')}>
-      <CameraOverlayContent shot={shot} />
+    {camera && <svg className="composition-overlay" viewBox={`0 0 1600 ${1600 / shot.aspectRatio}`} preserveAspectRatio="none" aria-label={t('compositionGuides')}>
+      <CameraOverlayContent labelScale={Math.max(1, Math.min(2,1600 / Math.max(1,frameWidth) * 10 / 22))} shot={shot} annotations={annotations} />{!annotations && <FocusDrawing shot={shot} />}
     </svg>}
-    <span className="frame-shot">{String(shot.number).padStart(3, '0')}</span><span className="frame-ratio">16:9</span>
+    <FocusInteraction shot={shot} /><span className="frame-shot">{String(shot.number).padStart(3, '0')}</span><span className="frame-ratio">{ratioLabel(shot.aspectRatio)}</span>
   </div></div>;
 }

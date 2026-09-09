@@ -1,3 +1,4 @@
+import { isLight } from '../types';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import type { Point2, Shot, Sketch, MeasurePoint, StageObject } from '../types';
 import { useStore } from '../store';
@@ -7,8 +8,8 @@ import { localBounds } from '../lib/scene';
 import { measurementPoint, worldFacing } from '../lib/spatial';
 import { Icon } from './Icon';
 
-export interface PlanOptions { names: boolean; facing: boolean; frustum: boolean; measurements: boolean; sketch: boolean; grid: boolean; scene: boolean }
-export const defaultPlanOptions: PlanOptions = { names: true, facing: true, frustum: true, measurements: true, sketch: true, grid: true, scene: true };
+export interface PlanOptions { lightDirections: boolean; names: boolean; facing: boolean; frustum: boolean; measurements: boolean; sketch: boolean; grid: boolean; scene: boolean }
+export const defaultPlanOptions: PlanOptions = { lightDirections: true, names: true, facing: true, frustum: true, measurements: true, sketch: true, grid: true, scene: true };
 export function planViewBox(shot: Shot) { const v = shot.plan.view; return `${v.x - v.width / 2} ${v.z - v.width * .3} ${v.width} ${v.width * .6}`; }
 function strokePath(points: Point2[]) { return points.map((p, i) => `${i ? 'L' : 'M'}${p[0]},${p[1]}`).join(' '); }
 export function SketchDrawing({ sketch }: { sketch: Sketch }) {
@@ -21,19 +22,23 @@ export function SketchDrawing({ sketch }: { sketch: Sketch }) {
 }
 export function PlanDrawing({ shot, options = defaultPlanOptions, selectedId, onObjectDown, onRename, labelScale = 1 }: { shot: Shot; options?: PlanOptions; selectedId?: string | null; labelScale?: number; onObjectDown?: (event: PointerEvent<SVGGElement>, object: StageObject) => void; onRename?: (object: StageObject) => void }) {
   const view = shot.plan.view; const startX = Math.floor(view.x - view.width / 2), startZ = Math.floor(view.z - view.width * .3); const step = view.width > 60 ? 5 : 1;
+  const labels: {x:number;z:number;w:number}[]=[];
   return <g fontFamily="Segoe UI, Arial, sans-serif">
     {options.grid && <g stroke="#4a5657" strokeWidth=".015">{Array.from({ length: Math.ceil(view.width / step) + 2 }, (_, i) => <path key={`x${i}`} d={`M${startX + i * step},${startZ - 1}v${view.width}`} />)}{Array.from({ length: Math.ceil(view.width * .6 / step) + 2 }, (_, i) => <path key={`z${i}`} d={`M${startX - 1},${startZ + i * step}h${view.width + 2}`} />)}<path d={`M0,${startZ - 1}v${view.width}M${startX - 1},0h${view.width + 2}`} stroke="#8a8c76" strokeWidth=".025" /></g>}
     {options.scene && shot.objects.filter(o => o.visible).map(o => {
       const x = o.position[0], z = o.position[2], bounds = localBounds(o); const sx = Math.max(.25, (bounds.max.x - bounds.min.x) * Math.abs(o.scale[0])), sz = Math.max(.25, (bounds.max.z - bounds.min.z) * Math.abs(o.scale[2])); const camera = o.type === 'Camera'; const yaw = worldFacing(o); const selected = o.id === selectedId;
       const radians = yaw * Math.PI / 180; const forward = [Math.sin(radians), Math.cos(radians)];
-      const spread = Math.atan(Math.tan(o.fov * Math.PI / 360) * 16 / 9);
+      const spread = Math.atan(Math.tan(o.fov * Math.PI / 360) * shot.aspectRatio);
+      const labelWidth=Math.max(.5,o.name.length*.16*labelScale);let labelY=-sz/2-.2;
+      for(let attempt=0;attempt<8&&labels.some(p=>Math.abs(p.x-x)<(p.w+labelWidth)/2&&Math.abs(p.z-(z+labelY))<.4*labelScale);attempt++)labelY-=.42*labelScale;
+      labels.push({x,z:z+labelY,w:labelWidth});
       return <g key={o.id} data-plan-object={o.id} transform={`translate(${x} ${z})`} onPointerDown={e => onObjectDown?.(e, o)} onDoubleClick={() => onRename?.(o)} style={{ cursor: o.locked ? 'default' : 'pointer' }}>
         {camera && options.frustum && <path data-frustum={o.id} d={`M0,0L${Math.sin(radians - spread) * 6},${Math.cos(radians - spread) * 6}L${Math.sin(radians + spread) * 6},${Math.cos(radians + spread) * 6}Z`} fill="#ddb5740c" stroke="#d2b57b" strokeWidth=".035" strokeDasharray=".12 .08" pointerEvents="none" />}
         <g transform={`rotate(${-o.rotation[1]})`} fill={selected ? '#bc9259' : o.type === 'Character' ? '#8ba99e' : o.type === 'Prop' ? '#c68e5c' : '#798b91'} stroke={selected ? '#ffe0a5' : '#c4cbc1'} strokeWidth={selected ? '.06' : '.025'}>
           {['Character', 'Sphere', 'Cylinder', 'Cone', 'Capsule'].includes(o.type) ? <ellipse rx={sx / 2} ry={sz / 2} /> : <rect x={-sx / 2} y={-sz / 2} width={sx} height={sz} rx=".04" />}
         </g>
-        {options.facing && <g stroke="#f3d299" strokeWidth=".045" fill="none" pointerEvents="none"><path d={`M0,0L${forward[0] * 1.15},${forward[1] * 1.15}`} /><path d={`M${forward[0] * .9 + forward[1] * .13},${forward[1] * .9 - forward[0] * .13}L${forward[0] * 1.15},${forward[1] * 1.15}L${forward[0] * .9 - forward[1] * .13},${forward[1] * .9 + forward[0] * .13}`} /></g>}
-        {options.names && <text y={-sz / 2 - .2} textAnchor="middle" fontSize={.28 * labelScale} fill="#ecdfc9" stroke="#293132" strokeWidth=".05" paintOrder="stroke" pointerEvents="none">{o.name}</text>}
+        {(isLight(o) ? options.lightDirections : options.facing) && o.type !== 'PointLight' && <g stroke="#f3d299" strokeWidth=".045" fill="none" pointerEvents="none"><path d={`M0,0L${forward[0] * 1.15},${forward[1] * 1.15}`} /><path d={`M${forward[0] * .9 + forward[1] * .13},${forward[1] * .9 - forward[0] * .13}L${forward[0] * 1.15},${forward[1] * 1.15}L${forward[0] * .9 - forward[1] * .13},${forward[1] * .9 + forward[0] * .13}`} /><text x={forward[0]*1.25} y={forward[1]*1.25} fontSize={.2*labelScale} fill="#f3d299" stroke="none">{t(isLight(o) ? 'lightDirection' : o.type === 'Prop' ? 'frontDirection' : 'facingDirection')}</text></g>}
+        {options.names && <g>{labelY < -sz/2-.3 && <path d={`M0,${-sz/2}L0,${labelY}`} stroke="#a7b8ae" strokeWidth=".02" pointerEvents="none" />}<text y={labelY} textAnchor="middle" fontSize={.28 * labelScale} fill="#ecdfc9" stroke="#293132" strokeWidth=".05" paintOrder="stroke" pointerEvents="none">{o.name}</text></g>}
         {shot.plan.showHeights && <text y={sz / 2 + .35} textAnchor="middle" fontSize={.23 * labelScale} fill="#b0c5bd" pointerEvents="none">{t('heightShort', { n: Number(o.position[1].toFixed(2)) })}</text>}
       </g>;
     })}
@@ -73,10 +78,6 @@ export function PlanView({ shot }: { shot: Shot }) {
     if (g?.sketch && g.sketch.points.length > 1) state.updatePlan({ sketches: [...useStore.getState().project.shots.find(s => s.id === shot.id)!.plan.sketches, g.sketch] });
     gesture.current = null; setDraft(null); state.endTransaction('transform');
   }
-  useEffect(() => {
-    const key = (e: KeyboardEvent) => { if (!document.querySelector('[role=dialog]') && !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as HTMLElement).tagName) && ['q', 'w', 'e'].includes(e.key.toLowerCase()) && !e.ctrlKey && !e.altKey) setTool('select'); };
-    window.addEventListener('keydown', key); return () => window.removeEventListener('keydown', key);
-  }, []);
   useEffect(() => {
     if (!settings.frameRequest) return;
     const current = useStore.getState(), active = current.project.shots.find(s => s.id === current.project.activeShotId), object = active?.objects.find(o => o.id === current.selectedId);
