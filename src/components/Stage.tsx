@@ -1,7 +1,7 @@
 import { Component, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Grid, Html, TransformControls } from '@react-three/drei';
-import { Group, MathUtils, PerspectiveCamera } from 'three';
+import { Group, MathUtils, PerspectiveCamera, Vector2 } from 'three';
 import { localBounds, toRadians } from '../lib/scene';
 import { useSettings } from '../settings';
 import { t, useT } from '../i18n';
@@ -9,6 +9,8 @@ import { ViewportNavigation } from './ViewportNavigation';
 import { useStore } from '../store';
 import type { Shot, StageObject, Vec3 } from '../types';
 import { Icon } from './Icon';
+import { registerCapture } from '../lib/export';
+import { CameraOverlayContent } from './CameraOverlay';
 
 class ViewErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -33,7 +35,7 @@ function Geometry({ object, selected = false }: { object: StageObject; selected?
     <mesh position={[0, 0.19, 0]} castShadow><cylinderGeometry args={[0.22, 0.3, 0.38, 24]} />{material}</mesh>
     <mesh position={[0, 0.56, 0]} castShadow><cylinderGeometry args={[0.18, 0.22, 0.36, 24]} /><meshStandardMaterial color={selected ? '#ffd399' : '#e4ad6d'} emissive="#c17428" emissiveIntensity={0.25} /></mesh>
     <mesh position={[0, 0.78, 0]} castShadow><sphereGeometry args={[0.18, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />{material}</mesh>
-    <mesh position={[0, 0.23, 0.255]}><boxGeometry args={[0.12, 0.12, 0.035]} /><meshStandardMaterial color="#292d2c" /></mesh>
+    <group rotation={[0, (object.frontYaw || 0) * Math.PI / 180, 0]}><mesh position={[0, 0.23, 0.255]}><boxGeometry args={[0.12, 0.12, 0.035]} /><meshStandardMaterial color="#292d2c" /></mesh></group>
   </group>;
   if (object.type === 'Plane') return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} receiveShadow><planeGeometry args={[3, 3]} /><meshStandardMaterial color={color} side={2} /></mesh>;
   if (object.type === 'Sphere') return <mesh position={[0, 0.5, 0]} castShadow receiveShadow><sphereGeometry args={[0.5, 24, 16]} />{material}</mesh>;
@@ -96,6 +98,19 @@ function PreviewCamera({ cameraObject }: { cameraObject: StageObject }) {
   }, [camera, cameraObject]);
   return null;
 }
+function CaptureBridge({ shotId }: { shotId: string }) {
+  const { gl, scene, camera } = useThree();
+  useLayoutEffect(() => registerCapture(shotId, (width, height) => {
+    if (width > gl.capabilities.maxTextureSize || height > gl.capabilities.maxTextureSize) throw new Error('Requested resolution exceeds this device limit.');
+    const size = gl.getSize(new Vector2()), ratio = gl.getPixelRatio();
+    try {
+      gl.setPixelRatio(1); gl.setSize(width, height, false); gl.render(scene, camera);
+      const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+      canvas.getContext('2d')!.drawImage(gl.domElement, 0, 0); return canvas;
+    } finally { gl.setPixelRatio(ratio); gl.setSize(size.x, size.y, false); gl.render(scene, camera); }
+  }), [gl, scene, camera, shotId]);
+  return null;
+}
 export function SpatialEditor({ shot }: { shot: Shot }) {
   const t = useT();
   const [viewKey, resetView] = useState(0);
@@ -117,16 +132,13 @@ export function CameraPreview({ shot }: { shot: Shot }) {
   const t = useT();
   const camera = shot.objects.find(o => o.type === 'Camera');
   return <div className="preview-surround"><div className="preview-frame" data-testid="camera-preview">
-    {camera ? <ViewErrorBoundary><Canvas shadows dpr={[1, 1.6]} camera={{ fov: camera.fov, near: 0.1, far: 200 }}>
+    {camera ? <ViewErrorBoundary><Canvas shadows gl={{ preserveDrawingBuffer: true }} dpr={[1, 1.6]} camera={{ fov: camera.fov, near: 0.1, far: 200 }}>
       <color attach="background" args={['#747e7e']} /><fog attach="fog" args={['#747e7e', 25, 90]} /><Lighting /><Ground />
-      <PreviewCamera cameraObject={camera} />
+      <PreviewCamera cameraObject={camera} /><CaptureBridge shotId={shot.id} />
       {shot.objects.filter(o => o.type !== 'Camera' && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} /></group>)}
     </Canvas></ViewErrorBoundary> : <div className="empty-state">{t('missingCamera')}</div>}
     {camera && <svg className="composition-overlay" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-label={t('compositionGuides')}>
-      {shot.overlays.includes('thirds') && <g data-overlay="thirds"><path d="M533 0v900M1067 0v900M0 300h1600M0 600h1600" /></g>}
-      {shot.overlays.includes('cross') && <g data-overlay="cross"><path d="M770 450h60M800 420v60" /></g>}
-      {shot.overlays.includes('safe') && <g data-overlay="safe"><rect x="80" y="45" width="1440" height="810" strokeDasharray="12 8" /></g>}
-      {shot.overlays.includes('spiral') && <g data-overlay="spiral" className="golden-spiral"><path d="M80 810C80 380 390 70 820 70S1520 330 1520 590 1340 840 1160 840 940 710 940 590 1020 440 1110 440 1220 490 1220 555 1180 635 1135 635 1080 600 1080 567 1100 527 1128 527" /></g>}
+      <CameraOverlayContent shot={shot} />
     </svg>}
     <span className="frame-shot">{String(shot.number).padStart(3, '0')}</span><span className="frame-ratio">16:9</span>
   </div></div>;

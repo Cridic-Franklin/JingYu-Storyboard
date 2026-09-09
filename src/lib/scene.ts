@@ -1,6 +1,8 @@
 import { Box3, Euler, MathUtils, Matrix4, PerspectiveCamera, Quaternion, Vector3 } from 'three';
+import { defaultPlan, defaultAnnotations } from '../types';
 import type { ObjectType, Shot, StageObject, Vec3 } from '../types';
 import { t, translate, type MessageKey } from '../i18n';
+import { semanticForward, shotSpatialData } from './spatial';
 import { useSettings, type Language } from '../settings';
 
 export const toRadians = (v: Vec3): Vec3 => v.map(MathUtils.degToRad) as Vec3;
@@ -11,11 +13,11 @@ export function cameraRotation(position: Vec3, target: Vec3): Vec3 {
 export function makeObject(type: ObjectType, count = 0): StageObject {
   const position: Vec3 = type === 'Camera' ? [4, 2.8, 7] : type === 'Prop' ? [1.4, 0, 0.6] : [count * 0.5, 0, 0];
   return { id: crypto.randomUUID(), type, name: type === 'Camera' ? t('storyboardCamera') : `${t(type)}${count ? ` ${count + 1}` : ''}`, semanticName: '', position,
-    rotation: type === 'Camera' ? cameraRotation(position, [0, 1, 0]) : [0, 0, 0], scale: [1, 1, 1], fov: 45, visible: true, locked: false };
+    rotation: type === 'Camera' ? cameraRotation(position, [0, 1, 0]) : [0, 0, 0], scale: [1, 1, 1], fov: 45, visible: true, locked: false, frontYaw: 0, frontLabel: type === 'Prop' ? t('interfaceFront') : '' };
 }
 export function makeShot(number: number): Shot {
   return { id: crypto.randomUUID(), number, title: t('untitledShot'), description: '', status: 'Draft', image: null,
-    objects: [makeObject('Camera')], overlays: ['thirds'], spatialDescription: '' };
+    objects: [makeObject('Camera')], overlays: ['thirds'], spatialDescription: '', plan: defaultPlan(), annotations: defaultAnnotations(), primarySubjectId: null, constraints: '', negativeConstraints: '' };
 }
 export const presets = ['Wide', 'Medium', 'Close', 'Low Angle', 'High Angle'] as const;
 export function presetCamera(name: typeof presets[number], subject: Vec3): Partial<StageObject> {
@@ -70,7 +72,7 @@ export function describeScene(shot: Shot, language: Language = useSettings.getSt
   const cam = shot.objects.find(o => o.type === 'Camera'); if (!cam) return tr('missingCamera');
   const camera = storyboardCamera(cam);
   const subjects = shot.objects.filter(o => o.type !== 'Camera' && o.visible);
-  const character = subjects.find(o => o.type === 'Character');
+  const character = subjects.find(o => o.id === shot.primarySubjectId && o.type === 'Character') ?? subjects.find(o => o.type === 'Character');
   const lines: string[] = [`${tr('shot', { n: String(shot.number).padStart(3, '0') })} — ${shot.title}`];
   const nameOf = (o: StageObject) => o.name.trim() || o.semanticName.trim() || tr(o.type);
   if (character) {
@@ -92,14 +94,20 @@ export function describeScene(shot: Shot, language: Language = useSettings.getSt
     if (frame.status === 'visible') parts.push(tr('descFrame', { name, x: Math.round(frame.x!), y: Math.round(frame.y!), width: Math.round(frame.width!), height: Math.round(frame.height!) }));
     else parts.push(tr('descOutside', { name }));
     if (o.type === 'Character' || o.type === 'Prop') {
-      const forward = new Vector3(0, 0, 1).applyEuler(new Euler(...toRadians(o.rotation)));
+      const forward = semanticForward(o);
       const towardCharacter = character && o.id !== character.id && forward.dot(new Vector3(...character.position).sub(new Vector3(...o.position)).normalize()) > 0.65;
       forward.applyQuaternion(camera.quaternion.clone().invert());
       const direction = towardCharacter ? nameOf(character!) : tr(Math.abs(forward.x) > Math.abs(forward.z) ? forward.x > 0 ? 'screenRight' : 'screenLeft' : forward.z > 0 ? 'towardCamera' : 'awayCamera');
-      parts.push(tr('descFacing', { name, direction }));
+      parts.push(o.type === 'Prop' && o.frontLabel ? tr('frontFacingLine', { name, front: o.frontLabel, target: direction }) : tr('descFacing', { name, direction }));
     }
     lines.push(parts.join(' '));
   }
+  const depth = shotSpatialData(shot).depthOrder.map(id => shot.objects.find(o => o.id === id)!.name);
+  if (depth.length > 1) lines.push(tr('depthOrder', { names: depth.join(' → ') }));
+  const primary = subjects.find(o => o.id === shot.primarySubjectId);
+  if (primary) lines.push(tr('primaryLine', { name: primary.name }));
+  if (shot.constraints.trim()) lines.push(`${tr('constraints')}:\n${shot.constraints.trim()}`);
+  if (shot.negativeConstraints.trim()) lines.push(`${tr('negativeConstraints')}:\n${shot.negativeConstraints.trim()}`);
   if (!subjects.length) lines.push(tr('descEmpty'));
   return lines.join('\n\n');
 }

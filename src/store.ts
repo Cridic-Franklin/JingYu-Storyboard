@@ -1,15 +1,15 @@
-import Dexie, { type Table } from 'dexie';
 import { create } from 'zustand';
-import type { ObjectType, Overlay, Project, Shot, StageObject, TransformMode } from './types';
+import { defaultPlan } from './types';
+import type { PlanData, ObjectType, Overlay, Project, Shot, StageObject, TransformMode } from './types';
 import { makeObject, makeShot } from './lib/scene';
 import { t } from './i18n';
 
-class ProjectDatabase extends Dexie {
-  projects!: Table<Project>;
-  constructor() { super('StoryboardSpatialDirector'); this.version(1).stores({ projects: 'id' }); }
-}
-const db = new ProjectDatabase();
+import { projectStorage, migrateProject } from './storage/ProjectStorage';
+export { migrateProject };
 interface State {
+  recovery: boolean;
+  newProject: (name: string) => Promise<void>; openProject: (project: Project) => Promise<void>; openRecent: (id: string) => Promise<void>; saveProject: () => Promise<void>; saveAs: (name: string) => Promise<void>;
+  updatePlan: (patch: Partial<PlanData>) => void; duplicateObject: (id: string) => void;
   project: Project; selectedId: string | null; mode: TransformMode; ready: boolean;
   saveStatus: 'loading' | 'saving' | 'saved' | 'error'; error: string;
   past: Project[]; future: Project[]; transaction: Project | null; transactionKind: 'field' | 'transform' | null;
@@ -27,21 +27,25 @@ function persist(project: Project) {
   const current = ++revision;
   useStore.setState({ saveStatus: 'saving', error: '' });
   saveQueue = saveQueue.catch(() => {}).then(async () => {
-    await db.projects.put(project);
+    await projectStorage.save(project);
     if (current === revision) useStore.setState({ saveStatus: 'saved' });
   }).catch(error => {
     if (current === revision) useStore.setState({ saveStatus: 'error', error: error instanceof Error ? error.message : String(error) });
   });
 }
-const emptyProject: Project = { id: 'local-project', shots: [], activeShotId: null, nextShotNumber: 1 };
-// Add 0.2 defaults without changing existing IDs, names, images or transforms.
-export function migrateProject(project: Project): Project {
-  return { ...project, shots: project.shots.map(shot => ({ ...shot, objects: shot.objects.map(o => ({ ...o, visible: o.visible ?? true, locked: o.locked ?? false })) })) };
+const emptyProject: Project = { id: 'local-project', shots: [], activeShotId: null, nextShotNumber: 1, schemaVersion: 3, name: 'Untitled project', updatedAt: new Date().toISOString() };
+function cloneScene(shot: Shot) {
+  const ids = new Map(shot.objects.map(o => [o.id, crypto.randomUUID()]));
+  const plan = structuredClone(shot.plan ?? defaultPlan());
+  plan.sketches.forEach(s => { s.id = crypto.randomUUID(); });
+  plan.measurements.forEach(m => { m.id = crypto.randomUUID(); for (const p of [m.a, m.b]) if (p.objectId) p.objectId = ids.get(p.objectId); });
+  return { objects: shot.objects.map(o => ({ ...structuredClone(o), id: ids.get(o.id)! })), plan, primarySubjectId: shot.primarySubjectId ? ids.get(shot.primarySubjectId) ?? null : null };
 }
-function cloneObjects(objects: StageObject[]) { return objects.map(o => ({ ...structuredClone(o), id: crypto.randomUUID() })); }
 let hydration: Promise<void> | undefined;
 export const useStore = create<State>((set, get) => {
   function commit(project: Project) {
+    if (get().recovery) return;
+    project = { ...project, updatedAt: new Date().toISOString() };
     const s = get();
     set({ project, ...(!s.transaction ? { past: [...s.past, s.project].slice(-60), future: [] } : {}) });
     persist(project);
@@ -55,18 +59,38 @@ export const useStore = create<State>((set, get) => {
     set({ project, selectedId: shot?.objects.some(o => o.id === get().selectedId) ? get().selectedId : null });
     persist(project);
   }
+  async function switchProject(project: Project) {
+    get().endTransaction(); await saveQueue;
+    if (!get().recovery && get().saveStatus === 'error') throw new Error(t('saveBeforeSwitch'));
+    await projectStorage.save(project); projectStorage.activate(project.id);
+    set({ project, recovery: false, selectedId: null, past: [], future: [], transaction: null, transactionKind: null, saveStatus: 'saved', error: '' });
+  }
   return {
+    recovery: false,
+    newProject: async name => { const shot = makeShot(1); await switchProject({ ...emptyProject, id: crypto.randomUUID(), name: name.trim() || t('untitledProject'), shots: [shot], activeShotId: shot.id, nextShotNumber: 2, updatedAt: new Date().toISOString() }); },
+    openProject: project => switchProject(migrateProject(project)),
+    openRecent: async id => { const project = await projectStorage.load(id); if (project) await switchProject(project); },
+    saveProject: async () => { get().endTransaction(); await saveQueue; await projectStorage.exportProject(get().project); },
+    saveAs: async name => { const project = { ...structuredClone(get().project), id: crypto.randomUUID(), name: name.trim() || get().project.name, updatedAt: new Date().toISOString() }; await switchProject(project); await projectStorage.exportProject(project); },
+    updatePlan: patch => editShot(s => ({ ...s, plan: { ...s.plan, ...patch } })),
+    duplicateObject: id => {
+      const s = get().project.shots.find(s => s.id === get().project.activeShotId); const source = s?.objects.find(o => o.id === id);
+      if (!source || source.type === 'Camera') return;
+      get().endTransaction(); const object = { ...structuredClone(source), id: crypto.randomUUID(), name: t('copySuffix', { name: source.name }), position: [source.position[0] + 0.5, source.position[1], source.position[2] + 0.5] as StageObject['position'] };
+      editShot(s => ({ ...s, objects: [...s.objects, object], spatialDescription: '' })); set({ selectedId: object.id });
+    },
     project: emptyProject, selectedId: null, mode: 'translate', ready: false, saveStatus: 'loading', error: '', past: [], future: [], transaction: null, transactionKind: null,
     hydrate: () => hydration ??= (async () => {
       try {
-        const existing = await db.projects.get('local-project');
+        const existing = await projectStorage.load(projectStorage.activeId());
         const first = makeShot(1);
         const project = existing ? migrateProject(existing) : { ...emptyProject, shots: [first], activeShotId: first.id, nextShotNumber: 2 };
-        set({ project, ready: true, saveStatus: 'saved', selectedId: project.shots.find(s => s.id === project.activeShotId)?.objects[0]?.id ?? null });
+        projectStorage.activate(project.id);
+        set({ project, recovery: false, ready: true, saveStatus: 'saved', selectedId: project.shots.find(s => s.id === project.activeShotId)?.objects[0]?.id ?? null });
         persist(project);
-      } catch (error) { set({ ready: true, saveStatus: 'error', error: String(error) }); }
+      } catch (error) { set({ recovery: true, ready: true, saveStatus: 'error', error: String(error) }); }
     })(),
-    retrySave: () => persist(get().project),
+    retrySave: () => { if (get().recovery) { hydration = undefined; void get().hydrate(); } else persist(get().project); },
     beginTransaction: (kind = 'field') => {
       if (get().transaction && get().transactionKind === kind) return;
       get().endTransaction(); set({ transaction: get().project, transactionKind: kind });
@@ -98,13 +122,13 @@ export const useStore = create<State>((set, get) => {
     },
     duplicateShot: id => {
       get().endTransaction(); const p = get().project; const source = p.shots.find(s => s.id === id); if (!source) return;
-      const shot: Shot = { ...structuredClone(source), id: crypto.randomUUID(), number: p.nextShotNumber, title: t('copySuffix', { name: source.title }), objects: cloneObjects(source.objects), spatialDescription: '' };
+      const shot: Shot = { ...structuredClone(source), id: crypto.randomUUID(), number: p.nextShotNumber, title: t('copySuffix', { name: source.title }), ...cloneScene(source), spatialDescription: '' };
       const shots = [...p.shots]; shots.splice(shots.findIndex(s => s.id === id) + 1, 0, shot);
       commit({ ...p, shots, activeShotId: shot.id, nextShotNumber: p.nextShotNumber + 1 }); set({ selectedId: null });
     },
     copyPreviousScene: () => {
       get().endTransaction(); const p = get().project; const index = p.shots.findIndex(s => s.id === p.activeShotId); if (index < 1) return;
-      editShot(s => ({ ...s, objects: cloneObjects(p.shots[index - 1].objects), spatialDescription: '' })); set({ selectedId: null });
+      editShot(s => ({ ...s, ...cloneScene(p.shots[index - 1]), spatialDescription: '' })); set({ selectedId: null });
     },
     updateShot: (patch, id) => editShot(shot => ({ ...shot, ...patch, ...('title' in patch || 'description' in patch ? { spatialDescription: '' } : {}) }), id),
     addObject: type => {
@@ -116,14 +140,14 @@ export const useStore = create<State>((set, get) => {
     },
     updateObject: (id, patch) => {
       const object = get().project.shots.find(s => s.id === get().project.activeShotId)?.objects.find(o => o.id === id);
-      if (!object || (object.locked && ['position', 'rotation', 'scale', 'fov'].some(k => k in patch))) return;
+      if (!object || (object.locked && ['position', 'rotation', 'scale', 'fov', 'frontYaw'].some(k => k in patch))) return;
       const { id: ignoredId, type: ignoredType, ...safePatch } = patch; void ignoredId; void ignoredType;
       editShot(shot => ({ ...shot, objects: shot.objects.map(o => o.id === id ? { ...o, ...safePatch } : o), spatialDescription: '' }));
     },
     deleteObject: id => {
       const object = get().project.shots.find(s => s.id === get().project.activeShotId)?.objects.find(o => o.id === id);
       if (!object || object.locked) return;
-      get().endTransaction(); editShot(shot => ({ ...shot, objects: shot.objects.filter(o => o.id !== id), spatialDescription: '' })); set({ selectedId: null });
+      get().endTransaction(); editShot(shot => ({ ...shot, objects: shot.objects.filter(o => o.id !== id), primarySubjectId: shot.primarySubjectId === id ? null : shot.primarySubjectId, plan: { ...shot.plan, measurements: shot.plan.measurements.map(m => ({ ...m, a: m.a.objectId === id ? { position: [...object.position] } : m.a, b: m.b.objectId === id ? { position: [...object.position] } : m.b })) }, spatialDescription: '' })); set({ selectedId: null });
     },
     selectObject: selectedId => set({ selectedId }), setMode: mode => set({ mode }),
     toggleOverlay: overlay => editShot(s => ({ ...s, overlays: s.overlays.includes(overlay) ? s.overlays.filter(o => o !== overlay) : [...s.overlays, overlay] })),
