@@ -1,0 +1,133 @@
+import { Component, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Canvas, useThree } from '@react-three/fiber';
+import { Grid, Html, TransformControls } from '@react-three/drei';
+import { Group, MathUtils, PerspectiveCamera } from 'three';
+import { localBounds, toRadians } from '../lib/scene';
+import { useSettings } from '../settings';
+import { t, useT } from '../i18n';
+import { ViewportNavigation } from './ViewportNavigation';
+import { useStore } from '../store';
+import type { Shot, StageObject, Vec3 } from '../types';
+import { Icon } from './Icon';
+
+class ViewErrorBoundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? <div className="empty-state">{t('webglError')}</div> : this.props.children; }
+}
+
+function Geometry({ object, selected = false }: { object: StageObject; selected?: boolean }) {
+  const color = selected ? '#e5b574' : object.type === 'Character' ? '#a0b6af' : object.type === 'Prop' ? '#ca8b58' : '#8c969c';
+  const material = <meshStandardMaterial color={color} roughness={0.75} emissive={selected ? '#503714' : '#000000'} emissiveIntensity={0.25} />;
+  if (object.type === 'Character') return <group>
+    <mesh position={[0, 1.62, 0]} castShadow><sphereGeometry args={[0.15, 20, 16]} />{material}</mesh>
+    <mesh position={[0, 1.63, 0.145]}><boxGeometry args={[0.13, 0.045, 0.045]} /><meshStandardMaterial color="#374840" /></mesh>
+    <mesh position={[0, 1.24, 0]} castShadow><capsuleGeometry args={[0.19, 0.34, 8, 16]} />{material}</mesh>
+    {[-1, 1].map(side => <group key={side}>
+      <mesh position={[side * 0.28, 1.12, 0]} rotation={[0, 0, side * 0.13]} castShadow><capsuleGeometry args={[0.068, 0.46, 6, 12]} />{material}</mesh>
+      <mesh position={[side * 0.105, 0.46, 0]} castShadow><capsuleGeometry args={[0.088, 0.66, 6, 12]} />{material}</mesh>
+      <mesh position={[side * 0.105, 0.075, 0.07]} castShadow><boxGeometry args={[0.18, 0.15, 0.32]} />{material}</mesh>
+    </group>)}
+  </group>;
+  if (object.type === 'Prop') return <group>
+    <mesh position={[0, 0.19, 0]} castShadow><cylinderGeometry args={[0.22, 0.3, 0.38, 24]} />{material}</mesh>
+    <mesh position={[0, 0.56, 0]} castShadow><cylinderGeometry args={[0.18, 0.22, 0.36, 24]} /><meshStandardMaterial color={selected ? '#ffd399' : '#e4ad6d'} emissive="#c17428" emissiveIntensity={0.25} /></mesh>
+    <mesh position={[0, 0.78, 0]} castShadow><sphereGeometry args={[0.18, 24, 12, 0, Math.PI * 2, 0, Math.PI / 2]} />{material}</mesh>
+    <mesh position={[0, 0.23, 0.255]}><boxGeometry args={[0.12, 0.12, 0.035]} /><meshStandardMaterial color="#292d2c" /></mesh>
+  </group>;
+  if (object.type === 'Plane') return <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.012, 0]} receiveShadow><planeGeometry args={[3, 3]} /><meshStandardMaterial color={color} side={2} /></mesh>;
+  if (object.type === 'Sphere') return <mesh position={[0, 0.5, 0]} castShadow receiveShadow><sphereGeometry args={[0.5, 24, 16]} />{material}</mesh>;
+  if (object.type === 'Cylinder') return <mesh position={[0, 0.5, 0]} castShadow receiveShadow><cylinderGeometry args={[0.5, 0.5, 1, 24]} />{material}</mesh>;
+  if (object.type === 'Capsule') return <mesh position={[0, 0.75, 0]} castShadow receiveShadow><capsuleGeometry args={[0.3, 0.9, 8, 16]} />{material}</mesh>;
+  if (object.type === 'Cone') return <mesh position={[0, 0.5, 0]} castShadow receiveShadow><coneGeometry args={[0.5, 1, 24]} />{material}</mesh>;
+  if (object.type === 'Camera') return <group>
+    <mesh castShadow><boxGeometry args={[0.55, 0.38, 0.34]} /><meshStandardMaterial color={selected ? '#e5b574' : '#c4c9cb'} /></mesh>
+    <mesh position={[0, 0, -0.3]} rotation={[Math.PI / 2, 0, 0]}><cylinderGeometry args={[0.2, 0.13, 0.3, 20]} />{material}</mesh>
+    <mesh position={[0, 0.29, 0]}><boxGeometry args={[0.24, 0.16, 0.2]} />{material}</mesh>
+  </group>;
+  return <mesh position={[0, 0.5, 0]} castShadow receiveShadow><boxGeometry args={[1, 1, 1]} />{material}</mesh>;
+}
+
+function EditableObject({ object }: { object: StageObject }) {
+  const group = useRef<Group>(null!);
+  const dragging = useRef(false);
+  const selected = useStore(s => s.selectedId === object.id);
+  const mode = useStore(s => s.mode);
+  const showLabels = useSettings(s => s.showLabels);
+  const navigating = useSettings(s => s.navigating);
+  const update = () => {
+    if (!group.current || !dragging.current) return;
+    const g = group.current;
+    useStore.getState().updateObject(object.id, {
+      position: g.position.toArray() as Vec3,
+      rotation: [g.rotation.x, g.rotation.y, g.rotation.z].map(MathUtils.radToDeg) as Vec3,
+      scale: g.scale.toArray() as Vec3,
+    });
+  };
+  useLayoutEffect(() => {
+    if (dragging.current) return;
+    group.current.position.fromArray(object.position);
+    group.current.rotation.set(...toRadians(object.rotation));
+    group.current.scale.fromArray(object.scale);
+  }, [object.position, object.rotation, object.scale]);
+  return <>
+    <group ref={group} visible={object.visible} onClick={event => { if (event.altKey || event.delta > 3) return; event.stopPropagation(); useStore.getState().selectObject(object.id); }}>
+      <Geometry object={object} selected={selected} />
+      {showLabels && object.visible && <Html position={[0, localBounds(object).max.y + 0.25, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[5, 0]}><span className="object-label">{object.name}</span></Html>}
+      {selected && object.type !== 'Camera' && <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.45, 0.48, 48]} /><meshBasicMaterial color="#e5b574" depthWrite={false} /></mesh>}
+    </group>
+    {selected && object.visible && !object.locked && mode !== 'select' && <TransformControls object={group} enabled={!navigating} mode={mode} size={0.85} onMouseDown={() => { useStore.getState().beginTransaction('transform'); dragging.current = true; }} onObjectChange={update} onMouseUp={() => { update(); dragging.current = false; useStore.getState().endTransaction('transform'); }} />}
+  </>;
+}
+
+function Lighting() {
+  return <><ambientLight intensity={1.1} /><hemisphereLight args={['#d6e5ed', '#494239', 1.5]} /><directionalLight position={[4, 9, 6]} intensity={2.5} castShadow shadow-mapSize={[1024, 1024]} shadow-camera-left={-15} shadow-camera-right={15} shadow-camera-top={15} shadow-camera-bottom={-15} shadow-bias={-0.001} /></>;
+}
+function Ground({ editor = false }: { editor?: boolean }) {
+  return <><mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.015, 0]} receiveShadow><planeGeometry args={[200, 200]} /><meshStandardMaterial color={editor ? '#303538' : '#535b5b'} roughness={1} /></mesh>
+    {editor && <Grid infiniteGrid cellSize={1} sectionSize={5} cellThickness={0.55} sectionThickness={0.9} cellColor="#555e61" sectionColor="#768078" fadeDistance={40} fadeStrength={1.5} position={[0, 0.002, 0]} />}</>;
+}
+function PreviewCamera({ cameraObject }: { cameraObject: StageObject }) {
+  const { camera } = useThree();
+  useLayoutEffect(() => {
+    const cam = camera as PerspectiveCamera;
+    cam.position.fromArray(cameraObject.position); cam.rotation.set(...toRadians(cameraObject.rotation));
+    cam.fov = cameraObject.fov; cam.updateProjectionMatrix(); cam.updateMatrixWorld();
+  }, [camera, cameraObject]);
+  return null;
+}
+export function SpatialEditor({ shot }: { shot: Shot }) {
+  const t = useT();
+  const [viewKey, resetView] = useState(0);
+  return <div className="editor-canvas">
+    <ViewErrorBoundary><Canvas key={`${shot.id}-${viewKey}`} shadows dpr={[1, 1.6]} camera={{ position: [8, 6, 10], fov: 48, near: 0.1, far: 200 }} onPointerMissed={event => { if (event.type === 'click' && !event.altKey) useStore.getState().selectObject(null); }}>
+      <color attach="background" args={['#303538']} /><fog attach="fog" args={['#303538', 30, 75]} />
+      <Lighting /><Ground editor />
+      {shot.objects.map(o => <EditableObject key={o.id} object={o} />)}
+      <ViewportNavigation />
+    </Canvas></ViewErrorBoundary>
+    <div className="viewport-label"><span className="live-dot" /> {t('perspective')} <span className="muted">/</span> {t('meters')}</div>
+    <button className="reset-view icon-button" title={t('resetView')} aria-label={t('resetView')} onClick={() => resetView(v => v + 1)}><Icon name="reset" /></button>
+    <div className="axis-guide"><span className="axis-y">Y</span><span className="axis-z">Z</span><span className="axis-x">X</span><i /></div>
+    <div className="viewport-help">{t('navigation')}</div>
+    <div className="viewport-scale">{t('unit')}</div>
+  </div>;
+}
+export function CameraPreview({ shot }: { shot: Shot }) {
+  const t = useT();
+  const camera = shot.objects.find(o => o.type === 'Camera');
+  return <div className="preview-surround"><div className="preview-frame" data-testid="camera-preview">
+    {camera ? <ViewErrorBoundary><Canvas shadows dpr={[1, 1.6]} camera={{ fov: camera.fov, near: 0.1, far: 200 }}>
+      <color attach="background" args={['#747e7e']} /><fog attach="fog" args={['#747e7e', 25, 90]} /><Lighting /><Ground />
+      <PreviewCamera cameraObject={camera} />
+      {shot.objects.filter(o => o.type !== 'Camera' && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} /></group>)}
+    </Canvas></ViewErrorBoundary> : <div className="empty-state">{t('missingCamera')}</div>}
+    {camera && <svg className="composition-overlay" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-label={t('compositionGuides')}>
+      {shot.overlays.includes('thirds') && <g data-overlay="thirds"><path d="M533 0v900M1067 0v900M0 300h1600M0 600h1600" /></g>}
+      {shot.overlays.includes('cross') && <g data-overlay="cross"><path d="M770 450h60M800 420v60" /></g>}
+      {shot.overlays.includes('safe') && <g data-overlay="safe"><rect x="80" y="45" width="1440" height="810" strokeDasharray="12 8" /></g>}
+      {shot.overlays.includes('spiral') && <g data-overlay="spiral" className="golden-spiral"><path d="M80 810C80 380 390 70 820 70S1520 330 1520 590 1340 840 1160 840 940 710 940 590 1020 440 1110 440 1220 490 1220 555 1180 635 1135 635 1080 600 1080 567 1100 527 1128 527" /></g>}
+    </svg>}
+    <span className="frame-shot">{String(shot.number).padStart(3, '0')}</span><span className="frame-ratio">16:9</span>
+  </div></div>;
+}
