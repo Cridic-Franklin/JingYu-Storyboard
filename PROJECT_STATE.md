@@ -17,6 +17,7 @@ Updated: 2026-09-10. Current repository and uncommitted changes take precedence 
 - Project schema 5, portable container 1 and Dexie schema 2. V0.9 projects migrate with safe defaults and retained IDs. Existing project/storage safety remains in place.
 - Preserved V0.9 shot, focus/lens/light, shared Scene Graph, annotations, semantic rules and export workflows.
 - Public GitHub documentation now has a Chinese-first bilingual README and changelog; the persistent release-language policy is recorded in `AGENTS.md`.
+- Public-release preparation adds an all-rights-reserved source notice, focused ignore rules, a bilingual Windows setup guide, the verified production demo link and a bilingual security policy. Repository visibility remains unchanged.
 
 TypeScript and production build passed. Two targeted V0.95 browser scripts passed, including direct gizmo dragging, all five panels, sixteen guide combinations, OBJ editing/synchronization, portable round-trip, autosave reload, legacy defaults, invalid/newer input rejection, export color isolation and rendered PNG inspection. See [verification](docs/VERIFICATION_V095.md). The historical V0.9 suite was not rerun.
 
@@ -35,7 +36,7 @@ No required V0.95 feature is intentionally omitted. Optional MTL is not implemen
 
 ## Next recommended task
 
-Manual director acceptance with real shots and modest triangulated OBJ props: pose/placement convenience, floating workspace comfort, composition guides and export readability. Fix concrete findings; no later milestone is authorized.
+Owner-controlled public release: review GitHub About metadata and vulnerability-reporting settings, then change repository visibility only when explicitly approved. Product work remains limited to concrete findings from real storyboard use; no later milestone is authorized.
 
 ## Context map
 

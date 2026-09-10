@@ -5,3 +5,24 @@ dist/
 
 .pnpm-store/
 *.jyproject
+
+# Local configuration and deployment state
+.env*
+.vercel/
+
+# Logs, coverage, and browser-test output
+*.log
+logs/
+coverage/
+playwright-report/
+test-results/
+
+# Editors and operating systems
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+Desktop.ini

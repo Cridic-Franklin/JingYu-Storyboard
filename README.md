@@ -5,6 +5,8 @@
 
 [简体中文](#简体中文) | [English](#english)
 
+**在线体验 / Live demo:** [https://jing-yu-storyboard.vercel.app](https://jing-yu-storyboard.vercel.app)
+
 ---
 
 <a id="简体中文"></a>
@@ -81,6 +83,8 @@
 
 需要 Node.js 20.19+ 或 22.12+，以及 pnpm。
 
+第一次在 Windows 上运行？请阅读[中文与 English 双语新手指南](docs/WINDOWS_SETUP.md)。
+
 ```sh
 pnpm install
 pnpm dev --port 5173
@@ -136,6 +140,10 @@ pnpm preview --port 5173
 Web 仍是应用核心。未来如提供 Tauri 桌面版，应作为同一 React 应用外部的轻量平台层。原生菜单、项目目录、安装包与更新机制可以后续评估；云账号、协作、AI 图像生成 API、网格建模、进阶绑定和动画系统不在当前计划内，除非另行明确提出。
 
 更多信息见 [架构](docs/ARCHITECTURE.md)、[发布与平台规划](docs/RELEASE_PLAN.md)和[当前项目状态](PROJECT_STATE.md)。
+
+### 安全与使用权
+
+安全问题请参阅[安全政策](SECURITY.md)。本仓库采用[保留所有权利的版权与使用声明](LICENSE)；公开源代码仅供查看与评估，不授予复制、修改、分发或商业使用许可。
 
 ### 验证
 
@@ -224,6 +232,8 @@ See the full [CHANGELOG](CHANGELOG.md) and [V0.95 verification record](docs/VERI
 
 Requires Node.js 20.19+ or 22.12+ and pnpm.
 
+New to local development on Windows? Follow the [bilingual Windows beginner guide](docs/WINDOWS_SETUP.md).
+
 ```sh
 pnpm install
 pnpm dev --port 5173
@@ -279,6 +289,10 @@ The recommended next step is real storyboard production testing of pose controls
 Web remains the application core. A future Tauri desktop edition should be a thin platform layer around the same React application. Native menus, project directories, installers and update delivery may be considered later. Cloud accounts, collaboration, AI image-generation APIs, mesh modeling, advanced rigging and animation remain outside the current plan unless explicitly requested.
 
 See [Architecture](docs/ARCHITECTURE.md), [Release and platform plan](docs/RELEASE_PLAN.md) and [Project state](PROJECT_STATE.md) for more detail.
+
+### Security and usage rights
+
+See the [Security Policy](SECURITY.md) for vulnerability reporting. This repository uses an [all-rights-reserved copyright and use notice](LICENSE); public source access does not grant permission to copy, modify, distribute or use the project commercially.
 
 ### Verification
 
