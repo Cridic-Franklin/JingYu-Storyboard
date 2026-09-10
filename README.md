@@ -7,6 +7,14 @@
 
 **在线体验 / Live demo:** [https://jing-yu-storyboard.vercel.app](https://jing-yu-storyboard.vercel.app)
 
+## ❤️ 支持镜域 / Support JingYu
+
+如果镜域对你的创作有所帮助，欢迎通过爱发电支持项目的持续开发与维护。
+
+If JingYu is useful to your creative workflow, you can support its continued development on Afdian.
+
+**爱发电 / Afdian:** [https://afdian.com/a/Cridic223](https://afdian.com/a/Cridic223)
+
 ---
 
 <a id="简体中文"></a>
