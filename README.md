@@ -137,7 +137,7 @@ pnpm preview --port 5173
 - 角色姿势用于场面调度，不提供 IK / FK 工作流、蒙皮、动画时间线、碰撞、接触或解剖关节限制求解。
 - 投影边界、身体可见区域、景深层次、平面图轮廓和语义正面判断均为近似值，不进行遮挡分析。
 - 结构化约束可以自动检查；自由文本约束仍需人工复核。密集标注仍可能重叠。
-- 工作区布局只保存在当前浏览器中，不写入便携项目；桌面界面最低宽度仍为 1100 px。
+- 工作区布局只保存在当前浏览器中，不写入便携项目；桌面界面最低宽度为 960 px，不面向手机布局。
 - 浏览器文件句柄取决于浏览器与操作系统；不支持时会使用下载 / 导入回退。
 - 生产构建仍有非阻塞的包体积提示，导出分辨率受设备纹理尺寸限制。
 
@@ -286,7 +286,7 @@ See [AI exports](docs/AI_EXPORT.md) for exact fields, reference spaces and appro
 - Character poses are blocking proxies without an IK / FK workflow, skinning, animation timeline, collision, contact or anatomical joint-limit solving.
 - Projection bounds, body visibility, depth layers, Plan footprints and semantic-front alignment are approximations without occlusion analysis.
 - Structured constraints support automatic checks; free-text constraints still require manual review. Dense annotations may overlap.
-- Workspace layouts are local browser preferences and are not part of portable projects. The desktop UI retains a minimum width of 1100 px.
+- Workspace layouts are local browser preferences and are not part of portable projects. The desktop UI has a 960 px minimum width and is not intended as a phone layout.
 - Browser file handles depend on browser and OS support; download / import fallback is used where unavailable.
 - Production builds retain a non-blocking bundle-size warning. Export dimensions remain device-texture-limited.
 

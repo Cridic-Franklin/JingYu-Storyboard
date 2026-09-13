@@ -16,6 +16,8 @@ logs/
 coverage/
 playwright-report/
 test-results/
+.playwright-cli/
+output/playwright/
 
 # Editors and operating systems
 .idea/

@@ -33,6 +33,7 @@ Transforms use meters, Y-up, Euler XYZ degrees. Plan horizontal is X and vertica
 - `src/storage/ProjectStorage.ts`: browser storage adapter, migration/validation, file picker and portable project I/O.
 - `src/components/ProjectMenu.tsx`: project actions calling the adapter and store.
 - `src/settings.ts`: local workspace preferences; `src/i18n.ts`: all bilingual interface copy.
+- `src/styles.css`: semantic editor tokens and shared component states; see [UI design system](UI_DESIGN_SYSTEM.md).
 
 ## Annotations and history
 

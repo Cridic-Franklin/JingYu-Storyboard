@@ -33,6 +33,11 @@ export function Icon({ name, size = 16 }: { name: string; size?: number }) {
     layers: <><path d="m3 7 9-5 9 5-9 5zM3 12l9 5 9-5M3 17l9 5 9-5" /></>,
     reset: <><path d="M4 11a8 8 0 1 1 2 7M4 4v7h7" /></>,
     document: <><path d="M5 3h10l4 4v14H5zM15 3v5h4M8 12h8M8 16h6" /></>,
+    maximize: <><path d="M4 9V4h5M15 4h5v5M20 15v5h-5M9 20H4v-5" /></>,
+    restore: <><rect x="7" y="7" width="12" height="12" rx="1" /><path d="M7 16H4V4h12v3" /></>,
+    float: <><path d="M10 5H5v14h14v-5M13 5h6v6M19 5l-9 9" /></>,
+    dock: <><rect x="4" y="4" width="16" height="16" rx="1" /><path d="M4 14h16M9 14v6" /></>,
+    minimize: <path d="M5 12h14" />,
   };
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{paths[name === 'Camera' ? 'camera' : name] ?? paths.layers}</svg>;
 }

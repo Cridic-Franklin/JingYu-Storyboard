@@ -1,6 +1,7 @@
 import { useEffect, type MouseEvent, type PointerEvent as ReactPointerEvent, type CSSProperties, type ReactNode } from 'react';
 import { useSettings, type Layout, type Panel } from '../settings';
 import { useT, type MessageKey } from '../i18n';
+import { Icon } from './Icon';
 
 const names: Record<Panel, MessageKey> = { shots: 'shotList', stage: 'spatialEditor', preview: 'cameraPreview', description: 'spatialDescription', inspector: 'inspector' };
 export function usePanel(panel: Panel) {
@@ -25,9 +26,9 @@ function panelGesture(event:ReactPointerEvent<HTMLElement>,panel:Panel,resize:bo
 function PanelControls({panel}:{panel:Panel}) {
   const t=useT(),s=useSettings(),floating=s.panels[panel].floating;
   return <span className="panel-controls">
-    <button aria-label={`${t(s.maximized===panel?'restorePanel':'maximizePanel')} · ${t(names[panel])}`} title={t(s.maximized===panel?'restorePanel':'maximizePanel')} onClick={()=>s.maximize(panel)}>□</button>
-    <button aria-label={`${t(floating?'dockPanel':'floatPanel')} · ${t(names[panel])}`} title={t(floating?'dockPanel':'floatPanel')} onClick={()=>s.setPanel(panel,{floating:!floating})}>{floating?'↙':'↗'}</button>
-    <button aria-label={`${t('hidePanel')} · ${t(names[panel])}`} title={t('hidePanel')} onClick={()=>s.setPanel(panel,{hidden:true})}>−</button>
+    <button aria-label={`${t(s.maximized===panel?'restorePanel':'maximizePanel')} · ${t(names[panel])}`} title={t(s.maximized===panel?'restorePanel':'maximizePanel')} onClick={()=>s.maximize(panel)}><Icon name={s.maximized===panel?'restore':'maximize'} size={12}/></button>
+    <button aria-label={`${t(floating?'dockPanel':'floatPanel')} · ${t(names[panel])}`} title={t(floating?'dockPanel':'floatPanel')} onClick={()=>s.setPanel(panel,{floating:!floating})}><Icon name={floating?'dock':'float'} size={12}/></button>
+    <button aria-label={`${t('hidePanel')} · ${t(names[panel])}`} title={t('hidePanel')} onClick={()=>s.setPanel(panel,{hidden:true})}><Icon name="minimize" size={12}/></button>
   </span>;
 }
 export function ResizeHandle({ dimension, panel, children }: { dimension: keyof Layout; panel: Panel; children?: ReactNode }) {
