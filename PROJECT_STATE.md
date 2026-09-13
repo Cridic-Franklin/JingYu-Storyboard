@@ -4,7 +4,7 @@ Updated: 2026-09-13. Current repository and uncommitted changes take precedence 
 
 ## Stable baseline
 
-**V0.95 — Workflow & Blocking Update.** Resolve the release commit from the title `Implement JingYu V0.95 workflow and blocking update`. Previous V0.9 baseline: `4e80019cb256fbb3681a1ac7e838e160c2b176b4`.
+**V0.96 — UI Professionalization Update.** The V0.96 release freezes the existing professional desktop UI pass without changing the shared Scene Graph, project data structure, persistence logic or core business logic. Previous V0.95 baseline: `091d736` (`Implement JingYu V0.95 workflow and blocking update`).
 
 ## Completed work
 
@@ -13,14 +13,14 @@ Updated: 2026-09-13. Current repository and uncommitted changes take precedence 
 - Embedded OBJ vertices/faces import, normal object editing and duplication, shared Plan/3D/Camera data, portable save/open and semantic exports.
 - Per-workspace validated layouts with internal maximize/restore, float/dock, header dragging, grip resizing and hide. Reset restores the active workspace; layouts persist locally. Hidden Camera panels retain export capability.
 - Mathematical golden spiral with four orientations, mirror, normalized offsets, scale/reset and shot persistence. Preview and Director overlays share the same aspect-aware curve.
-- Focused text/placeholder/disabled contrast tokens and bilingual controls; visible/package version updated to 0.95.
+- Focused text/placeholder/disabled contrast tokens and bilingual controls; visible/package version updated to 0.96.
 - Project schema 5, portable container 1 and Dexie schema 2. V0.9 projects migrate with safe defaults and retained IDs. Existing project/storage safety remains in place.
 - Preserved V0.9 shot, focus/lens/light, shared Scene Graph, annotations, semantic rules and export workflows.
 - Public GitHub documentation now has a Chinese-first bilingual README and changelog; the persistent release-language policy is recorded in `AGENTS.md`.
 - Public-release preparation adds an all-rights-reserved source notice, focused ignore rules, a bilingual Windows setup guide, the verified production demo link and a bilingual security policy. Repository visibility remains unchanged.
-- Professional desktop UI pass: centralized dark editor tokens, clearer chrome/panel/canvas hierarchy, consistent compact controls and states, accessible SVG panel controls, improved modal/loading/error/empty treatments, reduced-motion support, and wrapped export actions at narrow desktop widths. Business logic and the shared Scene Graph are unchanged; see [UI design system](docs/UI_DESIGN_SYSTEM.md).
+- Professional desktop UI pass: centralized dark editor tokens, clearer chrome/panel/canvas hierarchy, consistent compact controls and states, accessible SVG panel controls, improved modal/loading/error/empty treatments, reduced-motion support, and wrapped export actions at narrow desktop widths. Business logic and the shared Scene Graph are unchanged; see [UI design system](docs/UI_DESIGN_SYSTEM.md). This work is released as V0.96.
 
-TypeScript and production build passed. Two targeted V0.95 browser scripts passed, including direct gizmo dragging, all five panels, sixteen guide combinations, OBJ editing/synchronization, portable round-trip, autosave reload, legacy defaults, invalid/newer input rejection, export color isolation and rendered PNG inspection. See [verification](docs/VERIFICATION_V095.md). The historical V0.9 suite was not rerun.
+V0.96 release verification passed: TypeScript and production build, the V0.95 main targeted browser workflow, and a live V0.96 desktop-shell check covering version display, bilingual switching and primary workspace surfaces without runtime errors. The V0.95 edge script retains its documented timing-sensitive undo / redo assertion; two release runs reached opposite expected values at that assertion, so it remains inconclusive rather than a reproduced product regression. The historical V0.9 suite was not rerun. See [verification](docs/VERIFICATION_V095.md).
 
 ## Unfinished / deferred scope
 

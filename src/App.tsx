@@ -118,6 +118,6 @@ export default function App() {
         <StoryboardImage key={shot.id} shot={shot} />
       </> : <div className="empty-workspace"><Icon name="camera" size={48} /><h1>{t('emptyHeading')}</h1><p>{t('emptyHelp')}</p><button className="generate-button" onClick={state.addShot}><Icon name="plus" />{t('createShot')}</button></div>}</main>
       <ResizeHandle dimension="right" panel="inspector" /><Inspector shot={shot} />
-    </div><footer className="app-footer"><span><span className="live-dot" />{shot ? t('objectCount', { n: shot.objects.length }) : t('noShot')}</span><span>{t('shortcuts')}</span><span>{t('fullBrand')}<b>0.95</b></span></footer>
+    </div><footer className="app-footer"><span><span className="live-dot" />{shot ? t('objectCount', { n: shot.objects.length }) : t('noShot')}</span><span>{t('shortcuts')}</span><span>{t('fullBrand')}<b>0.96</b></span></footer>
   </div>;
 }

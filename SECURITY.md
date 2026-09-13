@@ -4,7 +4,7 @@
 
 ### 支持范围
 
-安全修复以当前稳定版本 **V0.95** 为准。较早版本可能无法单独获得修复，请先确认问题能否在当前版本中复现。
+安全修复以当前稳定版本 **V0.96** 为准。较早版本可能无法单独获得修复，请先确认问题能否在当前版本中复现。
 
 ### 私下报告安全问题
 
@@ -16,7 +16,7 @@
 
 ### Supported version
 
-Security fixes target the current stable release, **V0.95**. Older versions may not receive separate fixes; first confirm whether the issue reproduces in the current release.
+Security fixes target the current stable release, **V0.96**. Older versions may not receive separate fixes; first confirm whether the issue reproduces in the current release.
 
 ### Reporting a vulnerability privately
 

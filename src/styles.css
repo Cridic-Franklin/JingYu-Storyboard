@@ -15,7 +15,7 @@
 .rule-row{border-bottom:1px solid #3b4544;padding:10px 0;font-size:10px}.rule-row p{line-height:1.6}.rule-row button{font-size:9px;padding:4px}.inspector-section [data-testid=validation-summary]{font-size:10px;line-height:1.6;margin-top:12px}
 
 .workspace-presets{font-size:10px;padding:5px;max-width:125px}.ai-review-grid{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;gap:8px}.review-camera,.review-plan{position:relative;min-width:0;min-height:0;display:flex}.review-camera>.preview-surround{width:100%}.review-validation{padding:15px;overflow:auto;flex:1;font-size:11px;line-height:1.6}.review-validation h3{margin-bottom:12px}.workspace-tabs{flex-wrap:wrap}.workspace-tabs .export-actions{gap:4px}.export-actions button{white-space:nowrap}.camera-presets{height:auto;min-height:35px;padding-top:4px;padding-bottom:4px}.field-action:disabled{opacity:.4}.numeric-field:focus{outline:1px solid #d3ae78}.inspector-section h3{line-height:1.5}
-/* V0.95: shared contrast tokens, preserving the dark / amber palette. */
+/* V0.96: shared contrast tokens, preserving the dark / amber palette. */
 :root{--text-primary:#e2e5e1;--text-secondary:#b9c3c0;--text-muted:#a5b1ad;--text-placeholder:#9ca9a5;--text-disabled:#98a4a0;--muted:var(--text-muted);color:var(--text-primary)}
 input::placeholder,textarea::placeholder{color:var(--text-placeholder);opacity:1}
 button:disabled,input:disabled,select:disabled,textarea:disabled{color:var(--text-disabled);opacity:1;border-color:#424b4b;background:#252b2d;cursor:default}

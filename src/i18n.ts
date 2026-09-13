@@ -116,7 +116,7 @@ const messages = {
   noStoryboard: ['No storyboard yet', '尚未导入分镜图'], storyboardFor: ['Storyboard for {name}', '{name} 的分镜图'], untitledShot: ['Untitled shot', '未命名镜头'], addMoment: ['Add a moment to your sequence.', '为分镜序列添加一个片刻。'],
   Draft: ['Draft', '草稿'], Approved: ['Approved', '已确认'], newShot: ['New shot', '新建镜头'], duplicateShot: ['Duplicate Shot', '复制镜头'], copyPrevious: ['Copy Scene From Previous Shot', '从上一镜头复制场景'], copySuffix: ['{name} — copy', '{name} — 副本'],
   confirmCopy: ['Replace this shot’s scene with the previous shot’s scene? You can undo this action.', '用上一镜头的场景替换当前场景？此操作可撤销。'],
-  tagline: ['Every frame starts with a little direction.', '每一帧，从空间调度开始。'], versionTag: ['DIRECTOR WORKFLOW · 0.95', '导演工作流 · 0.95'],
+  tagline: ['Every frame starts with a little direction.', '每一帧，从空间调度开始。'], versionTag: ['DIRECTOR WORKFLOW · 0.96', '导演工作流 · 0.96'],
   reference: ['Storyboard reference', '分镜参考图'], removeImage: ['Remove storyboard image', '移除分镜图'], replaceImage: ['Replace image', '替换图片'], importImage: ['Import storyboard image', '导入分镜图'], imageFormats: ['PNG, JPG, WebP or GIF · up to 10 MB', 'PNG、JPG、WebP 或 GIF · 最大 10 MB'],
   imageTypeError: ['Choose a PNG, JPG, WebP or GIF image.', '请选择 PNG、JPG、WebP 或 GIF 图片。'], imageSizeError: ['Please choose an image smaller than 10 MB.', '请选择小于 10 MB 的图片。'], imageReadError: ['This image could not be opened. Try another file.', '无法打开此图片，请尝试其他文件。'],
   spatialDescription: ['Spatial description', '空间关系描述'], sceneWords: ['SCENE → WORDS', '场景 → 文字'], compositionNotes: ['COMPOSITION NOTES', '构图说明'], copy: ['Copy', '复制'], copied: ['Copied', '已复制'], manualCopy: ['Press Ctrl+C', '请按 Ctrl+C'], generatedDescription: ['Generated spatial description', '生成的空间描述'],

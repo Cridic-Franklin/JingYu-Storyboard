@@ -65,15 +65,14 @@ If JingYu is useful to your creative workflow, you can support its continued dev
 
 ### 当前版本
 
-当前稳定版本为 **V0.95 — 工作流与场面调度更新**。
+当前稳定版本为 **V0.96 — UI 专业化升级**。
 
-- 新增轻量角色关节与姿势预设，姿势会影响三维模型、摄影机投影边界和平面图表达。
-- 新增对象显示颜色，并提供“在摄影机视图及导出中使用编辑颜色”的显式选项；显示颜色不会自动变成 AI 材质语义。
-- 新增便携式 OBJ 几何导入。几何数据嵌入项目，不依赖原始绝对路径。
-- 五个主要面板支持最大化、浮动、移动、调整尺寸、停靠和隐藏；各工作区分别记忆有效布局。
-- 黄金螺旋会根据画幅重新计算，并按镜头保存方向、镜像、偏移和缩放。
+- 建立统一的深色桌面工作区 Design Token，统一间距、边框、圆角、层级和交互状态。
+- 优化顶部导航、镜头列表、主工作区工具栏、Spatial 3D、Plan View、Camera View、Camera Preview、空间描述和 Inspector。
+- 优化项目弹窗、空状态、Loading / Error 状态、中英文界面、窄桌面 Export Toolbar 及 Reduced Motion 适配。
+- 统一面板控制 SVG 图标，并补充 [UI Design System](docs/UI_DESIGN_SYSTEM.md)。
 
-完整更新记录见 [CHANGELOG](CHANGELOG.md)，验证范围见 [V0.95 验证记录](docs/VERIFICATION_V095.md)。
+本次更新专注于 UI / UX 专业化升级；共享 Scene Graph、项目数据结构、持久化逻辑和核心业务逻辑保持不变。完整更新记录见 [CHANGELOG](CHANGELOG.md)，历史验证范围见 [V0.95 验证记录](docs/VERIFICATION_V095.md)。
 
 ### 控制与约定
 
@@ -214,15 +213,14 @@ Duplicate Shot creates fresh shot and object IDs while copying spatial data, cam
 
 ### Current version
 
-The current stable release is **V0.95 — Workflow & Blocking Update**.
+The current stable release is **V0.96 — UI Professionalization Update**.
 
-- Added a lightweight articulated Character proxy and pose presets. Poses affect 3D geometry, Camera projection bounds and Plan representation.
-- Added object display colors with an explicit “Use editor colors in Camera / exports” option. Display colors never become AI material semantics automatically.
-- Added portable OBJ geometry import. Geometry is embedded in the project and does not depend on its original absolute path.
-- Added maximize, float, move, resize, dock and hide controls to the five major panels; each workspace remembers its own valid layout.
-- Rebuilt Golden Spiral generation around the current frame, with per-shot orientation, mirror, offset and scale settings.
+- Established unified dark desktop-workspace design tokens for spacing, borders, radii, hierarchy and interaction states.
+- Refined top navigation, Shot List, workspace toolbar, Spatial 3D, Plan View, Camera View, Camera Preview, Spatial Description and Inspector.
+- Refined project dialogs, empty, loading and error states, bilingual UI, narrow-desktop export toolbar behavior and reduced-motion support.
+- Standardized SVG panel-control icons and added the [UI Design System](docs/UI_DESIGN_SYSTEM.md).
 
-See the full [CHANGELOG](CHANGELOG.md) and [V0.95 verification record](docs/VERIFICATION_V095.md).
+This release is a UI/UX professionalization update. The shared Scene Graph, project data structure, persistence logic and core business logic remain unchanged. See the full [CHANGELOG](CHANGELOG.md) and the historical [V0.95 verification record](docs/VERIFICATION_V095.md).
 
 ### Controls and conventions
 

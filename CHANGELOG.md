@@ -3,6 +3,28 @@
 所有面向用户的版本记录均按简体中文在前、英文在后的顺序编写。<br>
 All user-facing release notes are written in Simplified Chinese first, followed by English.
 
+## V0.96 — UI Professionalization Update
+
+### 简体中文
+
+- 建立统一深色 UI Design Token，统一间距、边框、圆角、视觉层级和 Hover / Active / Selected 等交互状态。
+- 优化顶部导航栏、Shot List、主工作区工具栏、Spatial 3D、Plan View、Camera View、Camera Preview、空间描述与 Inspector。
+- 优化项目弹窗、空状态、Loading / Error 状态及中英文界面；面板控制改用统一 SVG 图标。
+- 优化 1024 × 768 与 1440 × 900 桌面布局、窄桌面 Export Toolbar，以及 Reduced Motion / 减少动态效果适配。
+- 新增 `docs/UI_DESIGN_SYSTEM.md`，记录可扩展的桌面工作区视觉规范。
+
+本次更新主要为 UI / UX 专业化升级；未修改共享 Scene Graph、项目数据结构、持久化逻辑或核心业务逻辑。
+
+### English
+
+- Established unified dark UI design tokens for spacing, borders, radii, visual hierarchy and hover / active / selected states.
+- Refined top navigation, Shot List, workspace toolbar, Spatial 3D, Plan View, Camera View, Camera Preview, Spatial Description and Inspector.
+- Refined project dialogs, empty, loading and error states, bilingual UI, and standardized SVG panel-control icons.
+- Refined 1024 × 768 and 1440 × 900 desktop layouts, the narrow-desktop Export Toolbar and reduced-motion support.
+- Added `docs/UI_DESIGN_SYSTEM.md` as the extensible visual reference for the desktop workspace.
+
+This release is a UI/UX professionalization update. It does not change the shared Scene Graph, project data structure, persistence logic or core business logic.
+
 ## V0.95 — 工作流与场面调度更新
 
 ### 简体中文
