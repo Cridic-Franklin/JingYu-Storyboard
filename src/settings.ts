@@ -11,7 +11,7 @@ export type PlanTool = 'select'|'pan'|'measure'|'pen'|'marker'|'eraser'|'arrow'|
 export type Theme = 'dark'|'light';
 export type TextSize = 'compact'|'default'|'large';
 export type AIProviderKind = 'deepseek'|'openai-compatible';
-export type NavSection = 'shots'|'objects'|'scene'|'characters'|'references'|'create'|'settings';
+export type NavSection = 'shots'|'camera'|'objects'|'scene'|'characters'|'references'|'create'|'settings';
 export interface PanelState { floating:boolean; hidden:boolean; x:number; y:number; width:number; height:number }
 export type PanelStates = Record<Panel,PanelState>;
 interface WorkspaceLayout { layout:Layout; panels:PanelStates }
@@ -54,7 +54,7 @@ export const useSettings=create<Settings>()(persist((set)=>({
     const view=views.includes(p.workspaceView!)?p.workspaceView!:'spatial';
     const safe=(v:WorkspaceView,layout?:Partial<Layout>,states?:Partial<PanelStates>):WorkspaceLayout=>({layout:validLayout(layout??{},v),panels:Object.fromEntries(panels.map(k=>{const def=workspaceDefaults(v).panels[k],s=states?.[k];return [k,s&&['x','y','width','height'].every(n=>Number.isFinite(s[n as keyof PanelState]))&&typeof s.hidden==='boolean'&&typeof s.floating==='boolean'?validRect(s):def];})) as PanelStates});
     const workspaces=Object.fromEntries(views.filter(v=>p.workspaces?.[v]).map(v=>[v,safe(v,p.workspaces![v]!.layout,p.workspaces![v]!.panels)]));
-    const navSections:Settings['navSection'][]=['shots','objects','scene','characters','references','create','settings'];
+    const navSections:Settings['navSection'][]=['shots','camera','objects','scene','characters','references','create','settings'];
     const legacyNav:Record<string,NavSection>={assets:'objects',environments:'scene',library:'references'};
     const nav=legacyNav[String(p.navSection)]??p.navSection;
     return {...current,language:p.language==='zh'?'zh':'en',showLabels:p.showLabels===true,theme:p.theme==='light'?'light':'dark',textSize:['compact','default','large'].includes(p.textSize!)?p.textSize!:'default',navSection:navSections.includes(nav as NavSection)?nav as NavSection:'shots',aiProvider:p.aiProvider==='openai-compatible'?'openai-compatible':'deepseek',aiEndpoint:typeof p.aiEndpoint==='string'?p.aiEndpoint:current.aiEndpoint,aiModel:typeof p.aiModel==='string'?p.aiModel:current.aiModel,aiKey:'',selectedPathId:null,selectedPathPointId:null,positionSnap:[0,.1,.5,1].includes(p.positionSnap!)?p.positionSnap!:0,rotationSnap:[0,5,15,45].includes(p.rotationSnap!)?p.rotationSnap!:0,workspaceView:view,...safe(view,p.layout,p.panels),workspaces};
