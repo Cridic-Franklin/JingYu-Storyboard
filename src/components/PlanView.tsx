@@ -23,8 +23,8 @@ function smoothPath(points: Point2[]) {
 }
 function PrimitivePlan({object,width,depth}:{object:StageObject;width:number;depth:number}){
   const rect=(x:number,z:number,w:number,d:number,rx=.04)=><rect x={x-w/2} y={z-d/2} width={w} height={d} rx={rx}/>;
-  if(['Car','Van'].includes(object.type))return <>{rect(0,0,width,depth,.18)}{rect(0,depth*.23,width*.78,depth*.38,.12)}<path d={`M${-width*.32},${depth*.48}L0,${depth*.6}L${width*.32},${depth*.48}`} fill="none"/></>;
-  if(object.type==='Motorcycle')return <><circle cx="0" cy={-depth*.36} r={width*.38} fill="none"/><circle cx="0" cy={depth*.36} r={width*.38} fill="none"/><path d={`M0,${-depth*.36}L${-width*.24},0L0,${depth*.36}L${width*.24},0Z`} fill="none"/><path d={`M${-width*.45},${depth*.22}H${width*.45}`} /></>;
+  if(['Car','Van'].includes(object.type))return <>{rect(0,0,width*.87,depth,.18)}{rect(0,-depth*.09,width*.72,depth*(object.type==='Van'?.56:.42),.12)}{[-1,1].flatMap(x=>[-1,1].map(z=><rect key={`${x},${z}`} x={x*width*.44-width*.04} y={z*depth*.34-depth*.07} width={width*.08} height={depth*.14} fill="#263238"/>))}<path d={`M${-width*.32},${depth*.42}H${width*.32}`} fill="none"/></>;
+  if(object.type==='Motorcycle')return <>{rect(0,-depth*.33,width*.2,depth*.32,.05)}{rect(0,depth*.33,width*.2,depth*.32,.05)}{rect(0,-depth*.1,width*.45,depth*.25)}{rect(0,depth*.09,width*.55,depth*.2,.1)}<path d={`M${-width*.45},${depth*.23}H${width*.45}`} /></>;
   if(object.type==='Chair')return <>{rect(0,0,width*.82,depth*.72)}<path d={`M${-width*.42},${-depth*.42}H${width*.42}`} strokeWidth=".08"/></>;
   if(['Table','Desk'].includes(object.type))return <>{rect(0,0,width,depth,.08)}{[[-.42,-.38],[.42,-.38],[-.42,.38],[.42,.38]].map(([x,z],i)=><circle key={i} cx={x*width} cy={z*depth} r={Math.min(width,depth)*.07}/>)}</>;
   if(object.type==='Sofa')return <>{rect(0,0,width,depth,.1)}{rect(0,-depth*.38,width*.88,depth*.16)}{rect(-width*.44,0,width*.12,depth*.82)}{rect(width*.44,0,width*.12,depth*.82)}</>;
@@ -109,7 +109,7 @@ export function PlanView({ shot }: { shot: Shot }) {
   useEffect(() => {
     if (!settings.frameRequest) return;
     const current = useStore.getState(), active = current.project.shots.find(s => s.id === current.project.activeShotId), object = active?.objects.find(o => o.id === current.selectedId);
-    if (object) current.updatePlan({ view: { x: object.position[0], z: object.position[2], width: Math.max(5, 6 * Math.max(...object.scale.map(Math.abs))) } });
+    if (object) { const bounds=worldBounds(object); current.updatePlan({ view: { x: (bounds.min.x+bounds.max.x)/2, z: (bounds.min.z+bounds.max.z)/2, width: Math.max(5, (bounds.max.x-bounds.min.x)*1.6, (bounds.max.z-bounds.min.z)/.6*1.6) } }); }
   }, [settings.frameRequest]);
   return <div className="plan-workspace">
     <ViewportTools annotationControls={<div className="annotation-settings"><input aria-label={t('brushColor')} type="color" value={color} onChange={e => setColor(e.target.value)} /><select aria-label={t('brushSize')} value={size} onChange={e => setSize(Number(e.target.value))}>{[.025, .05, .1].map(v => <option key={v} value={v}>{v} m</option>)}</select><button aria-label={t('clearSketch')} title={t('clearSketch')} onClick={() => state.updatePlan({ sketches: [] })}><Icon name="trash" size={15} /></button></div>} />

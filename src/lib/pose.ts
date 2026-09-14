@@ -44,7 +44,9 @@ export function poseBounds(pose: Pose) {
   const matrices = jointMatrices(pose), bounds = new Box3();
   for (const k of joints) {
     const d=skeleton[k]; bounds.union(new Box3().setFromCenterAndSize(new Vector3(...d.center),new Vector3(...d.size)).applyMatrix4(matrices[k]));
-    if (k.endsWith('Knee')) bounds.union(new Box3().setFromCenterAndSize(new Vector3(0,-.44,.08),new Vector3(.18,.12,.3)).applyMatrix4(matrices[k]));
+    if (k==='torso') bounds.union(new Box3().setFromCenterAndSize(new Vector3(0,.27,0),new Vector3(.46,.52,.46)).applyMatrix4(matrices[k]));
+    if (k.endsWith('Knee')) bounds.union(new Box3().setFromCenterAndSize(new Vector3(0,-.46,.1),new Vector3(.18,.1,.32)).applyMatrix4(matrices[k]));
+    if (k.endsWith('Elbow')) bounds.union(new Box3().setFromCenterAndSize(new Vector3(0,-.42,.04),new Vector3(.13,.16,.09)).applyMatrix4(matrices[k]));
     if (k==='head') bounds.union(new Box3().setFromCenterAndSize(new Vector3(0,0,.145),new Vector3(.12,.055,.04)).applyMatrix4(matrices[k]));
   }
   return bounds;

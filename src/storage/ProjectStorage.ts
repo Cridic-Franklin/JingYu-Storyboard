@@ -11,6 +11,8 @@ export interface ProjectStorage {
   save(project: Project): Promise<void>;
   activate(id: string): void;
   recent(): Promise<ProjectSummary[]>;
+  removeRecent(id: string): Promise<void>;
+  deleteLocal(id: string): Promise<void>;
   importFile(file: File): Promise<Project>;
   pickProject(): Promise<Project | null>;
   exportProject(project: Project): Promise<boolean>;
@@ -101,14 +103,24 @@ export class WebProjectStorage implements ProjectStorage {
   private handles = new Map<string, WritableHandle>();
   private db = new Database();
   activeId() { return localStorage.getItem('jy-active-project') || 'local-project'; }
-  activate(id: string) { localStorage.setItem('jy-active-project', id); }
+  activate(id: string) { localStorage.setItem('jy-active-project', id); localStorage.setItem('sa-hidden-recent', JSON.stringify(this.hiddenRecent().filter(item=>item!==id))); }
+  private hiddenRecent(): string[] { try { const value: unknown=JSON.parse(localStorage.getItem('sa-hidden-recent')||'[]'); return Array.isArray(value)?value.filter((item):item is string=>typeof item==='string'):[]; } catch { return []; } }
+  async removeRecent(id: string) { localStorage.setItem('sa-hidden-recent',JSON.stringify([...new Set([...this.hiddenRecent(),id])])); }
+  async deleteLocal(id: string) {
+    if(id===this.activeId()) throw new Error('Open another project before deleting this local project.');
+    await this.db.transaction('rw',this.db.projects,this.db.backups,async()=>{
+      await this.db.projects.delete(id);
+      await this.db.backups.where('projectId').equals(id).delete();
+    });
+    this.handles.delete(id);
+  }
   async load(id: string) {
     const raw = await this.db.projects.get(id); if (!raw) return undefined;
     if (raw.schemaVersion !== 6 && !(await this.db.backups.where('projectId').equals(id).toArray()).some(b => (b.data as { schemaVersion?: number })?.schemaVersion === raw.schemaVersion)) await this.db.backups.add({ projectId: id, createdAt: new Date().toISOString(), data: raw });
     return migrateProject(raw);
   }
   async save(project: Project) { await this.db.projects.put(project); }
-  async recent() { return (await this.db.projects.toArray()).map(p => ({ id: p.id, name: p.name || 'Untitled project', updatedAt: p.updatedAt || '' })).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)); }
+  async recent() { const hidden=this.hiddenRecent(); return (await this.db.projects.toArray()).filter(p=>!hidden.includes(p.id)).map(p => ({ id: p.id, name: p.name || 'Untitled project', updatedAt: p.updatedAt || '' })).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt)); }
   async importFile(file: File) {
     if (file.size > 100 * 1024 * 1024) throw new Error('Project file exceeds 100 MB.');
     const data = record(JSON.parse(await file.text()));

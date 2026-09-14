@@ -118,6 +118,12 @@ Create 下的 Script、Shot Planning、AI Storyboard 只打开说明型预览对
 
 The seven global domains describe product responsibilities, not arbitrary asset buckets. Future Create modules are honest previews with explanatory dialogs and no fake executable controls. Theme, lighting and settings use distinct icon semantics.
 
+### Final RC ownership and reading layout
+
+Shots contains a collapsible Shot Details / Camera workflow on the left (shot metadata, subject/focus/composition rules and active-camera selection). Scene contains environment settings. Right Inspector shows only the current selected object's parameters; no duplicate Scene/Environment tabs or shot-wide settings appear there.
+
+AI prose uses a default 180px reading field (minimum 140px), vertical native resize and text scrolling. The existing bottom split, float and maximize controls remain available. Suggestions never shrink the prose field. Stage stacking is isolated from the reading area; the compact rail adapts to short desktop heights without covering the lower panels.
+
 ## Character Mannequin Rules / 角色人偶规则
 
 Character Mannequin 是 Blocking Mannequin，不是写实人物。默认站姿采用低多边形关节结构：头部、短颈、肩线、锥形躯干、骨盆、上下臂、手、上下腿、踝与脚。关节层级必须清楚，选择态不能遮蔽轮廓。

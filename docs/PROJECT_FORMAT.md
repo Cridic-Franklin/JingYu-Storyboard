@@ -35,6 +35,7 @@ No referenced local paths or IndexedDB keys are required to reopen a file on ano
 - Save As asks for a new file/name/location when supported, or downloads a named copy as fallback. After successful output it activates an independent project ID. Canceling the file picker leaves the current project unchanged.
 - Open imports and validates a file into a fresh local project ID. Scene and shot IDs inside it remain stable. An imported file cannot overwrite an existing autosave.
 - Recent Projects reopens an existing local project.
+- Remove from Recent stores a separate hidden-list preference and retains the project data. Reopening that project restores it to Recent. Delete local project confirms deletion of an inactive project's IndexedDB record and migration backups in one transaction; active deletion is blocked. Neither action deletes exported files or changes the portable format.
 
 Browser file handles are session-only platform state, not portable project data. A reopened native file handle is reused by Save in that session; downloads remain available on browsers without the API. Tauri is not required or installed.
 

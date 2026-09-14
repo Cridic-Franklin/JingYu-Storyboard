@@ -15,11 +15,14 @@ V0.98 is the final fully public, free Community / Beta candidate. Every view con
 
 ### Improved
 
+- 最终 RC 恢复 Spatial 3D 对象变换并隔离路径点编辑；AI 阅读区支持缩放，Shot/Scene 工作流归左侧，Inspector 仅显示当前对象参数。
+- 最近项目支持确认后移除或删除非活动本地项目；导出文件不受影响。
 - 旧 `.jyproject` 在替换状态前完成验证与安全迁移，并保留可恢复数据。
 - Shot 工作流、Inspector、Plan 工具列、窄桌面布局、Loading / Error / Empty 状态与键盘操作得到收口。
 
 ### AI
 
+- 真实 DeepSeek 中英文 Faithful、Director、Current Shot Suggestions 已验证；修正关系主语/参照混淆、景别覆盖计算及中文技术说明混入英文的问题。
 - 正式定义：AI interprets intent and language. SceneAxis owns spatial truth.
 - Faithful / Director 导演表达，以及带 Category / Suggestion / Reason 的 Current Shot Suggestions。
 - 输出语言跟随 UI，用户对象名保持原样，结构化建议经过 schema 校验。
@@ -67,11 +70,14 @@ V0.98 is the final fully public, free Community / Beta candidate. Every view con
 ### Improved
 
 - Legacy `.jyproject` files are validated and safely migrated before state replacement while recoverable data is retained.
+- Final RC restores Spatial 3D object transforms with isolated path-point editing, resizable AI reading areas and clear left-workflow/right-object ownership.
+- Recent projects support confirmed list removal or inactive local-project deletion; exported files are untouched.
 - Shot workflows, Inspector, Plan tool rail, narrow-desktop layout, loading/error/empty states and keyboard access are finalized.
 
 ### AI
 
 - Defines: AI interprets intent and language. SceneAxis owns spatial truth.
+- Real bilingual DeepSeek Faithful, Director and Current Shot Suggestions checks passed; corrected relation-role ambiguity, shot-size coverage and untranslated technical prose.
 - Faithful / Director interpretation and Current Shot Suggestions with Category / Suggestion / Reason.
 - Output follows the UI language, preserves object names and validates structured schemas.
 - DeepSeek and OpenAI-compatible endpoints share one adapter; failures and timeouts retain deterministic output. Keys remain in current-tab memory only.

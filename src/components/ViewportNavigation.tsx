@@ -28,8 +28,8 @@ export function ViewportNavigation() {
       if (navigating) {
         useSettings.getState().setNavigating(true);
         scene.traverse(o => {
-          const controls = o as unknown as { type: string; enabled: boolean };
-          if (controls.type === 'TransformControls' && controls.enabled) { controls.enabled = false; disabled.push(controls); }
+          const controls = o as unknown as { isTransformControls?: boolean; enabled: boolean };
+          if (controls.isTransformControls && controls.enabled) { controls.enabled = false; disabled.push(controls); }
         });
       }
     };

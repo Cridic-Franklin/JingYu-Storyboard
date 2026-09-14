@@ -16,7 +16,7 @@ import { interpretationPrompt, isLowDifference, isShotSuggestionResponse, sugges
 import { AddObjectMenu } from './components/AddObjectMenu';
 import { Icon } from './components/Icon';
 import { CameraPreview, SpatialEditor } from './components/Stage';
-import { CameraPresets, Inspector } from './components/Inspector';
+import { CameraPresets, Inspector, ShotWorkflowSettings } from './components/Inspector';
 import { ResizeHandle, usePanel } from './components/Layout';
 import { PlanView } from './components/PlanView';
 import { ProjectMenu } from './components/ProjectMenu';
@@ -41,6 +41,7 @@ function ShotList({ shots, activeId }: { shots: Shot[]; activeId: string | null 
       </button>
       <button className="shot-delete icon-button" title={t('deleteShot', { n: shot.number })} aria-label={t('deleteShot', { n: String(shot.number).padStart(3, '0') })} onClick={() => { if (window.confirm(t('confirmDelete', { n: String(shot.number).padStart(3, '0') }))) useStore.getState().deleteShot(shot.id); }}><Icon name="trash" size={13} /></button>
     </ShotReference></div>)}<button className="new-shot" onClick={() => useStore.getState().addShot()}><Icon name="plus" />{t('newShot')}</button></div></details>
+    {shots.filter(s=>s.id===activeId).map(shot=><details key={shot.id} className="shot-workflow"><summary>{t('shotDetails')} / {t('Camera')}</summary><button onClick={()=>useStore.getState().selectObject(shot.objects.find(o=>o.type==='Camera')?.id??null)}><Icon name="camera"/>{t('activeCamera')}</button><ShotWorkflowSettings shot={shot}/></details>)}
     <div className="sidebar-bottom"><Icon name="layers" size={20} /><p>{t('tagline')}</p><span>{t('versionTag')}</span></div>{menu&&<ContextMenu x={menu.x} y={menu.y} actions={actions(menu.shot)} onClose={()=>setMenu(null)}/>}
   </aside>;
 }
@@ -107,7 +108,7 @@ export default function App() {
       if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') { event.preventDefault(); if (current.selectedId) current.duplicateObject(current.selectedId); return; }
       if (event.ctrlKey || event.metaKey) return;
       const modes: Record<string, TransformMode> = { q: 'select', w: 'translate', e: 'rotate', r: 'scale' };
-      if (modes[event.key.toLowerCase()]) { event.preventDefault(); current.setMode(modes[event.key.toLowerCase()]); useSettings.setState({ planTool: 'select' }); }
+      if (modes[event.key.toLowerCase()]) { event.preventDefault(); current.setMode(modes[event.key.toLowerCase()]); useSettings.setState({ planTool: 'select', poseMode: false }); }
       if (event.key.toLowerCase() === 'h') { event.preventDefault(); current.setMode('select'); useSettings.setState({ planTool: 'pan' }); }
       if (event.key.toLowerCase() === 'm') { event.preventDefault(); settings.setWorkspace('plan'); useSettings.setState({ planTool: 'measure' }); }
       if (event.key.toLowerCase() === 'f') { event.preventDefault(); useSettings.getState().frameSelected(); }
@@ -124,7 +125,7 @@ export default function App() {
   }, []);
   if (!state.ready) return <div className="loading">{t('loading')}</div>;
   const absent = (panel: 'shots'|'stage'|'preview'|'description'|'inspector') => settings.panels[panel].hidden || settings.panels[panel].floating;
-  const style = { '--shot-width': `${absent('shots') ? 0 : settings.layout.left}px`, '--inspector-width': `${absent('inspector') ? 0 : settings.layout.right}px`, '--bottom-height': `${absent('preview') && absent('description') ? 0 : Math.min(settings.layout.bottom, Math.max(180,window.innerHeight * .3))}px`, '--preview-fraction': `${settings.layout.preview}fr`, '--description-fraction': `${1 - settings.layout.preview}fr` } as CSSProperties;
+  const style = { '--shot-width': `${absent('shots') ? 0 : settings.layout.left}px`, '--inspector-width': `${absent('inspector') ? 0 : settings.layout.right}px`, '--bottom-height': `${absent('preview') && absent('description') ? 0 : Math.min(settings.layout.bottom, Math.max(180,window.innerHeight - 450))}px`, '--preview-fraction': `${settings.layout.preview}fr`, '--description-fraction': `${1 - settings.layout.preview}fr` } as CSSProperties;
   const menuObject=shot?.objects.find(object=>object.id===objectMenu?.id);
   return <div className="app-shell" style={style} onFocusCapture={e => { if (((e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) && !e.target.readOnly) || e.target instanceof HTMLSelectElement) state.beginTransaction(); }} onBlurCapture={() => state.endTransaction('field')}>
     <a className="skip-link" href="#main-workspace">{t('skipWorkspace')}</a><header className="app-header"><picture className="brand-logo"><img width="640" height="160" src={settings.theme==='dark'?'/brand/sceneaxis-logo-horizontal-dark.svg':'/brand/sceneaxis-logo-horizontal-light.svg'} alt={t('fullBrand')} /></picture><div className="header-divider" /><ProjectMenu /><span className="local-badge">{t('localProject')}</span>

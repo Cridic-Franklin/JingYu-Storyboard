@@ -4,7 +4,19 @@ Updated: 2026-09-14. Current repository and uncommitted changes take precedence 
 
 ## Release candidate
 
-**V0.98 — SceneAxis Productization Update.** V0.96 remains the last committed stable tag until the V0.98 release verification and commit complete.
+**V0.98 — SceneAxis Productization Update.** Local RC baseline: `79cc2ae`. V0.96 remains the last formal stable tag; V0.98 has not been tagged, released or pushed.
+
+## Final RC blocker fixes
+
+- Object selection now clears the path-edit target, including add/duplicate, undo/redo and shot/project switches. Object and path-point gizmos have separate ownership; hiding/deleting/locking a path owner clears invalid point selection. Move/Rotate/Scale tool switches exit pose editing. Navigation uses the actual TransformControls capability flag.
+- AI prose defaults to a 180px, vertically resizable reading field with independent text scrolling. Bottom-panel resizing now respects its actual layout value instead of a 30vh cap. Viewport stacking is isolated and the short-screen tool rail remains inside its viewport.
+- File / Recent Projects offers confirmed Remove from Recent (data retained) and Delete local project (inactive project and its migration backups only; exported files untouched). Active-project deletion is disabled and rechecked by storage. No database schema change was needed.
+- Shot metadata, subject/focus/composition rules and camera workflow controls live under the left Shots workflow. Scene environment controls remain under left Scene. Right Inspector contains only the selected object's parameters, transform, composition position and motion path; duplicate scene/environment tabs were removed.
+- All 24 built-in blocking/primitive assets were rendered in Spatial, Plan and Camera views. Corrected motorcycle wheel/frame axes, exposed Car/Van tires and front glazing/headlights, Bed/Monitor proportions, Desk pedestal, Lamp base, torso taper and asset/pose bounds. Plan Frame Selected now fits actual asset extents. No assets were removed.
+- Real DeepSeek browser requests passed in Chinese and English for Faithful, Director and Current Shot Suggestions. The first real run exposed punctuation-only Faithful output and reversed relation roles; prompts now require flowing prose and explicitly named subject/reference roles. Shot-size inference was fixed to use frame-height coverage instead of the fraction of an object that is visible. Final six requests returned HTTP 200, passed response/language checks and preserved all shot data except the optional AI prose. Output was manually reviewed against deterministic spatial facts.
+- The supplied temporary key was injected only into the isolated test process and browser memory. It was absent from preferences and IndexedDB checks; test configuration was cleared and browser processes closed. No credential is stored in source, artifacts or this document.
+- Evidence: `scripts/verify-v098-rc-fixes.cjs`, `scripts/verify-v098-assets.cjs`, `scripts/verify-v098-real-provider.cjs` (opt-in credential via process environment only), and the existing V0.9 storage/semantics suites. Local screenshots/results remain ignored under `output/playwright/`.
+- Final gates passed: nine real 3D gizmo drags (three owner types × Move/Rotate/Scale), all three path-owner isolation/visibility/smooth/add/delete flows, Plan drag, native AI textarea resize, panel resizing and complete tool-rail containment in Dark/Light at 1366×768 and 1920×1080, sidebar ownership, recent remove/cancel/local delete/active protection and list persistence after reload. V0.9 storage/semantics and all 72 asset-view renders passed. TypeScript and `pnpm build` passed; no browser page/console errors in the final workflow. Credential-pattern scans of source and local verification artifacts were empty. The existing production chunk-size warning remains non-blocking.
 
 ## V0.98 completed implementation
 
@@ -35,7 +47,7 @@ The RC regression also passes the updated foundation, storage, V0.9 storage/sema
 - README now presents V0.98 accurately, includes real dark/light UI previews, clone/install/run/build instructions, BYOK boundaries, limitations, roadmap, license and feedback guidance. Release notes use New / Improved / AI / Spatial / Motion / UI & Brand / Compatibility / Known Issues. Basic bug and feature request templates are included.
 - Package metadata is `sceneaxis` 0.98.0, private, with Node >=20.19 and pnpm 12.3.4 declared. Brand/favicons are present. The largest intended release asset is the 2.68 MB North Star PNG; no accidental tracked build artifact or binary was found.
 - Current `LICENSE` is an all-rights-reserved source-available notice and still names the JingYu project authors. It is not an open-source license. It was audited but not changed; the owner must explicitly accept or revise that policy before a public V0.98 release.
-- No automation-accessible real provider credential or attachable configured browser tab was available. Mock/intercepted provider, unavailable, timeout, schema, retry and no-mutation behavior pass, but one successful real DeepSeek/OpenAI-compatible Chinese + English RC request remains required.
+- Real DeepSeek Chinese/English requests have now passed; the earlier credential-availability blocker is resolved. Provider outage/timeout/schema/retry evidence remains available from the preceding RC tests.
 
 ## UI / UX Correction Pass
 
@@ -54,7 +66,7 @@ The RC regression also passes the updated foundation, storage, V0.9 storage/sema
 - Optional AI direct calls depend on provider availability and browser CORS. No image generation or autonomous blocking solver is exposed.
 - OBJ remains geometry-only. The production bundle retains its existing non-blocking size warning.
 - The older V0.95 edge harness has a known byte-for-byte hidden-camera PNG comparison failure from the preceding verification; the dedicated camera and export workflows pass. Full pixel determinism is not claimed.
-- No real external AI provider request was executed because no user API key was supplied. Provider behavior, failure states and structured suggestions were verified through an intercepted OpenAI-compatible endpoint; actual provider availability and browser CORS remain environmental.
+- Real-provider success is point-in-time evidence, not a guarantee of future provider availability or perfect model compliance. AI outputs remain advisory; deterministic spatial facts stay authoritative.
 
 ## Deferred scope
 
@@ -62,4 +74,4 @@ Backend infrastructure, accounts, cloud persistence, collaboration, image genera
 
 ## Next recommended task
 
-The V0.98 worktree is suitable for human release-candidate review. Public release remains blocked on a successful real-provider bilingual AI check and explicit owner acceptance or revision of the current all-rights-reserved/JingYu-named license. Before publishing, also explicitly accept the production bundle-size warning and the legacy V0.95 hidden-camera byte-comparison limitation. After release, move V0.99 commercial plans, accounts, licensing/DRM, payment, hosted APIs and private product strategy to a private repository before implementation.
+Review the final RC locally. The real-provider blocker is resolved; public release still requires owner confirmation of the existing all-rights-reserved/JingYu-named license policy. The production bundle warning and legacy V0.95 hidden-camera byte-comparison limitation remain documented. No V0.98 tag/release/push or V0.99 development is authorized in this pass.

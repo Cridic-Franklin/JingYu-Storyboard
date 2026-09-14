@@ -7,6 +7,8 @@ All user-facing release notes are written in Simplified Chinese first, followed 
 
 ### 简体中文
 
+- 最终 RC 修复 3D 对象/路径点事件与选择冲突；放大并开放 AI 阅读区缩放，精简左右侧职责，加入最近项目移除及安全本地删除。
+- 修复车辆轮胎、家具比例与计算边界；真实 DeepSeek 中英文验证推动 Faithful 自然改写、Director 关系方向及景别计算修正。
 - 正式接入 SceneAxis 品牌资产、深浅主题、全局导航、命令面板、上下文菜单与文字缩放设置。
 - 全局导航收口为 Shots、Objects、Scene、Characters、References、Create、Settings；Create 未来功能统一标记为即将推出，不提供伪操作。
 - SceneAxis Chromatic Divider 增加 Key / Soft 两级，增强同色阶表面层次并区分 Theme、Lighting、Settings 与 Search 图标语义。
@@ -19,6 +21,8 @@ All user-facing release notes are written in Simplified Chinese first, followed 
 
 ### English
 
+- Final RC fixes separate 3D object/path-point selection, enlarge and resize AI reading areas, clarify sidebar ownership and add confirmed recent removal/local deletion.
+- Corrected vehicle wheels, furniture proportions and bounds; real bilingual DeepSeek checks improved Faithful prose, Director relation direction and shot-size inference.
 - Integrated official SceneAxis brand assets, dark/light themes, global navigation, command palette, context menus and text scaling.
 - Finalized global navigation as Shots, Objects, Scene, Characters, References, Create and Settings. Future Create modules are uniformly labeled Coming Soon and expose no fake actions.
 - Added Key / Soft SceneAxis Chromatic Dividers, stronger tonal surfaces and distinct Theme, Lighting, Settings and Search icon semantics.

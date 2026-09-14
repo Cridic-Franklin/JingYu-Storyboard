@@ -2,7 +2,7 @@ import { CharacterGeometry, ObjGeometry } from './BlockingGeometry';
 import { isLight } from '../types';
 import { FocusDrawing, FocusInteraction } from './FocusOverlay';
 import { fovToLens, ratioLabel } from '../lib/camera';
-import { Component, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
+import { Component, useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react';
 import { Canvas, useThree } from '@react-three/fiber';
 import { Grid, Html, Line, TransformControls } from '@react-three/drei';
 import { CatmullRomCurve3, Group, MathUtils, PerspectiveCamera, Vector2, Vector3, Object3D } from 'three';
@@ -22,39 +22,41 @@ class ViewErrorBoundary extends Component<{ children: ReactNode }, { failed: boo
   render() { return this.state.failed ? <div className="empty-state">{t('webglError')}</div> : this.props.children; }
 }
 
-function StoryboardPrimitive({ object, material }: { object: StageObject; material: ReactNode }) {
+function StoryboardPrimitive({ object, material, showFacing }: { object: StageObject; material: ReactNode; showFacing:boolean }) {
   const box=(key:string,p:Vec3,s:Vec3)=><mesh key={key} position={p} castShadow receiveShadow><boxGeometry args={s}/>{material}</mesh>;
   let parts:ReactNode[]=[];
   if(object.type==='Chair')parts=[box('seat',[0,.48,0],[.85,.12,.85]),box('back',[0,.78,-.38],[.85,.65,.12]),...[-.34,.34].flatMap((x,i)=>[-.34,.34].map((z,j)=>box(`l${i}${j}`,[x,.23,z],[.1,.46,.1])))];
   if(['Table','Desk'].includes(object.type))parts=[box('top',[0,.73,0],[object.type==='Desk'?2.2:2,.14,1.3]),...[-.82,.82].flatMap((x,i)=>[-.48,.48].map((z,j)=>box(`l${i}${j}`,[x,.34,z],[.12,.68,.12])))];
+  if(object.type==='Desk')parts.push(box('drawers',[.7,.38,-.05],[.48,.65,1.05]));
   if(object.type==='Sofa')parts=[box('base',[0,.3,0],[2.4,.6,1]),box('back',[0,.7,-.43],[2.4,.8,.16]),box('left',[-1.08,.55,0],[.24,.5,1]),box('right',[1.08,.55,0],[.24,.5,1])];
-  if(object.type==='Bed')parts=[box('base',[0,.28,0],[2,.56,4]),box('head',[0,.75,-1.9],[2,1.5,.18]),box('pillow',[0,.62,-1.35],[1.4,.14,.55])];
+  if(object.type==='Bed')parts=[box('base',[0,.25,0],[1.8,.5,2.2]),box('head',[0,.65,-1.03],[1.8,1.3,.14]),box('pillow',[0,.56,-.72],[1.4,.12,.4])];
   if(object.type==='Wall')parts=[box('wall',[0,1.4,0],[4,2.8,.2])];
   if(object.type==='Door')parts=[box('door',[0,1.05,0],[1,2.1,.16]),<mesh key="handle" position={[.34,1.05,.12]}><sphereGeometry args={[.06,8,6]}/><meshStandardMaterial color="#D6A84F"/></mesh>];
   if(object.type==='Window')parts=[box('top',[0,1.95,0],[1.6,.1,.16]),box('bottom',[0,.85,0],[1.6,.1,.16]),box('left',[-.75,1.4,0],[.1,1,.16]),box('right',[.75,1.4,0],[.1,1,.16]),box('mid',[0,1.4,0],[.08,1,.16])];
   if(object.type==='Stairs')parts=Array.from({length:6},(_,i)=>box(`s${i}`,[0,(i+1)*.125,-1.25+i*.5],[2,(i+1)*.25,.5]));
-  if(['Car','Van'].includes(object.type)){const van=object.type==='Van';parts=[box('body',[0,.58,0],[2,van?1.15:.72,4.2]),box('cab',[0,van?1.42:.98,van ? .55 : .25],[1.76,van?1.5:.72,van?2.35:1.75]),box('hood',[0,.84,1.55],[1.78,.32,.75]),box('rear',[0,.79,-1.72],[1.84,.35,.5]),...[-.9,.9].flatMap((x,i)=>[-1.42,1.42].map((z,j)=><mesh key={`w${i}${j}`} position={[x,.38,z]} rotation={[0,0,Math.PI/2]}><cylinderGeometry args={[.35,.35,.2,12]}/><meshStandardMaterial color="#20272b"/></mesh>))];}
+  if(['Car','Van'].includes(object.type)){const van=object.type==='Van';parts=[box('body',[0,van?.8:.68,0],[2,van?.8:.6,4.2]),box('cab',[0,van?1.42:.98,van ? -.45 : -.2],[1.76,van?1.5:.72,van?2.35:1.75]),box('hood',[0,.84,1.55],[1.78,.32,.75]),box('rear',[0,.79,-1.72],[1.84,.35,.5]),...[-1.03,1.03].flatMap((x,i)=>[-1.42,1.42].map((z,j)=><mesh key={`w${i}${j}`} position={[x,.35,z]} rotation={[0,0,Math.PI/2]}><cylinderGeometry args={[.35,.35,.24,12]}/><meshStandardMaterial color="#20272b"/></mesh>))];}
+  if(['Car','Van'].includes(object.type))parts.push(...[-.65,.65].map((x,i)=><mesh key={`headlight${i}`} position={[x,.75,2.105]}><boxGeometry args={[.35,.16,.025]}/><meshStandardMaterial color="#dfdcc2"/></mesh>),<mesh key="windshield" position={[0,object.type==='Van'?1.62:1.08,object.type==='Van'?.735:.68]}><boxGeometry args={[1.5,object.type==='Van'?.72:.42,.025]}/><meshStandardMaterial color="#334951"/></mesh>);
   if(object.type==='Motorcycle')parts=[
-    ...[-.82,.82].map((z,i)=><mesh key={`wheel${i}`} position={[0,.42,z]} rotation={[0,0,Math.PI/2]}><torusGeometry args={[.36,.075,6,14]}/><meshStandardMaterial color="#20272b"/></mesh>),
-    <mesh key="frame" position={[0,.63,0]} rotation={[Math.PI/2,0,0]}><torusGeometry args={[.48,.055,5,3]}/>{material}</mesh>,
+    ...[-.82,.82].map((z,i)=><mesh key={`wheel${i}`} position={[0,.435,z]} rotation={[0,Math.PI/2,0]}><torusGeometry args={[.36,.075,6,14]}/><meshStandardMaterial color="#20272b"/></mesh>),
+    <mesh key="frame" position={[0,.63,0]} rotation={[0,Math.PI/2,0]}><torusGeometry args={[.48,.055,5,3]}/>{material}</mesh>,
     box('seat',[0,.88,-.28],[.38,.12,.62]),box('tank',[0,.85,.18],[.45,.32,.5]),box('fork',[0,.67,.68],[.08,.75,.08]),
     box('handlebar',[0,.99,.58],[.75,.06,.06]),box('headlamp',[0,.82,.7],[.24,.24,.16]),box('tail',[0,.77,-.72],[.3,.12,.2])
   ];
   if(object.type==='Box')parts=[box('box',[0,.5,0],[1,1,1])];
   if(object.type==='Shelf')parts=[box('left',[-.55,1,0],[.1,2,.45]),box('right',[.55,1,0],[.1,2,.45]),...[.05,.65,1.25,1.9].map((y,i)=>box(`sh${i}`,[0,y,0],[1.2,.1,.45]))];
-  if(object.type==='Monitor')parts=[box('screen',[0,1,0],[1.25,.75,.12]),box('stem',[0,.48,0],[.12,.55,.12]),box('foot',[0,.18,0],[.65,.08,.4])];
-  if(object.type==='Lamp')parts=[<mesh key="shade" position={[0,1.35,0]}><coneGeometry args={[.42,.6,12,1,true]}/>{material}</mesh>,box('stem',[0,.7,0],[.08,1.1,.08]),<mesh key="base" position={[0,.12,0]}><cylinderGeometry args={[.35,.35,.12,16]}/>{material}</mesh>];
-  return <group>{parts}<mesh position={[0,.08,localBounds(object).max.z+.03]}><boxGeometry args={[.24,.05,.05]}/><meshBasicMaterial color="#41C6CE"/></mesh></group>;
+  if(object.type==='Monitor')parts=[box('screen',[0,.52,0],[1.1,.64,.1]),box('stem',[0,.16,0],[.1,.28,.1]),box('foot',[0,.04,0],[.5,.08,.35]),<mesh key="display" position={[0,.52,.055]}><boxGeometry args={[1,.54,.01]}/><meshStandardMaterial color="#263840"/></mesh>];
+  if(object.type==='Lamp')parts=[<mesh key="shade" position={[0,1.35,0]}><coneGeometry args={[.42,.6,12,1,true]}/>{material}</mesh>,box('stem',[0,.65,0],[.08,1.18,.08]),<mesh key="base" position={[0,.06,0]}><cylinderGeometry args={[.35,.35,.12,16]}/>{material}</mesh>];
+  return <group>{parts}{showFacing&&<mesh position={[0,.08,localBounds(object).max.z+.03]}><boxGeometry args={[.24,.05,.05]}/><meshBasicMaterial color="#41C6CE"/></mesh>}</group>;
 }
 
-function Geometry({ object, selected = false, editorColors = true, editing = false }: { object: StageObject; selected?: boolean; editorColors?: boolean; editing?: boolean }) {
+function Geometry({ object, selected = false, editorColors = true, editing = false, showFacing = true }: { object: StageObject; selected?: boolean; editorColors?: boolean; editing?: boolean; showFacing?:boolean }) {
   const selectedColor=object.type==='Camera'?'#D6A84F':'#41C6CE';
   const color = editorColors && object.displayColor ? object.displayColor : selected ? selectedColor : object.type === 'Character' ? '#a0b6af' : object.type === 'Prop' ? '#ca8b58' : '#8c969c';
   const material = <meshStandardMaterial color={color} roughness={0.75} emissive={selected ? '#503714' : '#000000'} emissiveIntensity={0.25} />;
   if (isLight(object)) return <group><mesh><sphereGeometry args={[.17,12,8]} /><meshBasicMaterial color={object.light?.color ?? '#ffe5a0'} /></mesh>{object.type !== 'PointLight' && <group rotation={[Math.PI/2,0,0]}><mesh position={[0,.55,0]}><cylinderGeometry args={[.025,.025,1,8]} /><meshBasicMaterial color="#e9cf85" /></mesh><mesh position={[0,1.1,0]}><coneGeometry args={[.12,.25,8]} /><meshBasicMaterial color="#e9cf85" /></mesh></group>}</group>;
   if (object.type === 'Character') return <CharacterGeometry object={object} material={material} editing={editing} />;
   if (object.type === 'OBJ' && object.asset) return <ObjGeometry object={object} material={material} />;
-  if (['Chair','Table','Desk','Sofa','Bed','Wall','Door','Window','Stairs','Car','Van','Motorcycle','Box','Shelf','Monitor','Lamp'].includes(object.type)) return <StoryboardPrimitive object={object} material={material} />;
+  if (['Chair','Table','Desk','Sofa','Bed','Wall','Door','Window','Stairs','Car','Van','Motorcycle','Box','Shelf','Monitor','Lamp'].includes(object.type)) return <StoryboardPrimitive object={object} material={material} showFacing={showFacing} />;
   if (object.type === 'Prop') return <group>
     <mesh position={[0, 0.19, 0]} castShadow><cylinderGeometry args={[0.22, 0.3, 0.38, 24]} />{material}</mesh>
     <mesh position={[0, 0.56, 0]} castShadow><cylinderGeometry args={[0.18, 0.22, 0.36, 24]} /><meshStandardMaterial color={selected ? '#ffd399' : '#e4ad6d'} emissive="#c17428" emissiveIntensity={0.25} /></mesh>
@@ -82,7 +84,8 @@ function EditableObject({ object }: { object: StageObject }) {
   const poseMode = useSettings(s => s.poseMode);
   const showLabels = useSettings(s => s.showLabels);
   const navigating = useSettings(s => s.navigating);
-  const editingPathPoint = useSettings(s => Boolean(s.selectedPathPointId));
+  const editingPathPoint = useSettings(s => Boolean(s.selectedPathId));
+  useEffect(() => () => { if(dragging.current){dragging.current=false;useStore.getState().endTransaction('transform');} },[selected,mode,editingPathPoint]);
   const update = () => {
     if (!group.current || !dragging.current) return;
     const g = group.current;
@@ -99,7 +102,7 @@ function EditableObject({ object }: { object: StageObject }) {
     group.current.scale.fromArray(object.scale);
   }, [object.position, object.rotation, object.scale]);
   return <>
-    <group ref={group} name={object.id} visible={object.visible} onClick={event => { if (event.altKey || event.delta > 3) return; event.stopPropagation(); useStore.getState().selectObject(object.id); }}>
+    <group ref={group} name={object.id} visible={object.visible} onClick={event => { if (event.altKey || event.delta > 3 || dragging.current) return; event.stopPropagation(); useStore.getState().selectObject(object.id); }}>
       <Geometry object={object} selected={selected} editing={selected && poseMode && !object.locked && object.visible} />
       {showLabels && object.visible && <Html position={[0, localBounds(object).max.y + 0.25, 0]} center style={{ pointerEvents: 'none' }} zIndexRange={[5, 0]}><span className="object-label">{object.name}</span></Html>}
       {selected && object.type !== 'Camera' && <mesh position={[0, 0.015, 0]} rotation={[-Math.PI / 2, 0, 0]}><ringGeometry args={[0.45, 0.48, 48]} /><meshBasicMaterial color="#41C6CE" depthWrite={false} /></mesh>}
@@ -125,13 +128,14 @@ function Ground({ editor = false }: { editor?: boolean }) {
 }
 function PathPointHandle({path,point,color}:{path:MotionPath;point:PathPoint;color:string}){
   const ref=useRef<Group>(null!),dragging=useRef(false),selected=useSettings(s=>s.selectedPathPointId===point.id),navigating=useSettings(s=>s.navigating);
+  useEffect(()=>()=>{if(dragging.current){dragging.current=false;useStore.getState().endTransaction('transform');}},[selected]);
   useLayoutEffect(()=>{if(!dragging.current)ref.current.position.fromArray(point.position);},[point.position]);
   const update=()=>{if(!dragging.current)return;const state=useStore.getState(),shot=state.project.shots.find(item=>item.id===state.project.activeShotId);if(!shot)return;state.updateShot({motionPaths:shot.motionPaths.map(item=>item.id===path.id?{...item,points:item.points.map(p=>p.id===point.id?{...p,position:ref.current.position.toArray() as Vec3}:p)}:item)});};
   return <><group ref={ref} position={point.position}><mesh data-path-point={point.id} onClick={event=>{event.stopPropagation();useStore.getState().selectObject(path.objectId);useStore.getState().setMode('select');useSettings.setState({selectedPathId:path.id,selectedPathPointId:point.id});}}><sphereGeometry args={[selected ? .16 : .11,12,8]}/><meshBasicMaterial color={selected?'#F1F5F7':color}/></mesh>{selected&&<mesh rotation={[-Math.PI/2,0,0]}><ringGeometry args={[.2,.23,24]}/><meshBasicMaterial color={color} depthTest={false}/></mesh>}</group>{selected&&<TransformControls object={ref} enabled={!navigating} mode="translate" size={.65} onMouseDown={()=>{useStore.getState().beginTransaction('transform');dragging.current=true;}} onObjectChange={update} onMouseUp={()=>{update();dragging.current=false;useStore.getState().endTransaction('transform');}}/>}</>;
 }
 function MotionPaths3D({shot}:{shot:Shot}){
   const selectedPath=useSettings(s=>s.selectedPathId);
-  return <>{shot.motionPaths.filter(path=>path.visible&&path.points.length>1).map(path=>{const object=shot.objects.find(o=>o.id===path.objectId),color=object?.type==='Camera'?'#D6A84F':'#41C6CE',selected=selectedPath===path.id;const raw=path.points.map(point=>new Vector3(...point.position));const points=path.smooth&&raw.length>2?new CatmullRomCurve3(raw).getPoints(Math.max(24,raw.length*12)):raw;return <group key={path.id}><Line points={points} color={color} lineWidth={selected?3:1.35} transparent opacity={selected?1:.48} onClick={event=>{event.stopPropagation();useStore.getState().selectObject(path.objectId);useSettings.setState({selectedPathId:path.id,selectedPathPointId:null});}}/>{path.points.map(point=><PathPointHandle key={point.id} path={path} point={point} color={color}/>)}</group>;})}</>;
+  return <>{shot.motionPaths.filter(path=>shot.plan.layers.motionPaths&&path.visible&&path.points.length>1&&shot.objects.some(o=>o.id===path.objectId&&o.visible&&!o.locked)).map(path=>{const object=shot.objects.find(o=>o.id===path.objectId),color=object?.type==='Camera'?'#D6A84F':'#41C6CE',selected=selectedPath===path.id;const raw=path.points.map(point=>new Vector3(...point.position));const points=path.smooth&&raw.length>2?new CatmullRomCurve3(raw).getPoints(Math.max(24,raw.length*12)):raw;return <group key={path.id}><Line points={points} color={color} lineWidth={selected?3:1.35} transparent opacity={selected?1:.48} onClick={event=>{event.stopPropagation();useStore.getState().selectObject(path.objectId);useSettings.setState({selectedPathId:path.id,selectedPathPointId:null});}}/>{path.points.map(point=><PathPointHandle key={point.id} path={path} point={point} color={color}/>)}</group>;})}</>;
 }
 function PreviewCamera({ cameraObject, aspect }: { cameraObject: StageObject; aspect: number }) {
   const { camera } = useThree();
@@ -181,7 +185,7 @@ export function CameraPreview({ shot, annotations }: { shot: Shot; annotations?:
     {camera ? <ViewErrorBoundary><Canvas shadows gl={{ preserveDrawingBuffer: true }} dpr={[1, 1.6]} camera={{ fov: camera.fov, near: 0.1, far: 200 }}>
       <color attach="background" args={['#747e7e']} /><fog attach="fog" args={['#747e7e', 25, 90]} /><Lighting shot={shot} /><Ground />
       <PreviewCamera aspect={shot.aspectRatio} cameraObject={camera} /><CaptureBridge shotId={shot.id} />
-      {shot.objects.filter(o => o.type !== 'Camera' && !isLight(o) && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} editorColors={shot.useEditorColors} /></group>)}
+      {shot.objects.filter(o => o.type !== 'Camera' && !isLight(o) && o.visible).map(o => <group key={o.id} position={o.position} rotation={toRadians(o.rotation)} scale={o.scale}><Geometry object={o} editorColors={shot.useEditorColors} showFacing={false} /></group>)}
     </Canvas></ViewErrorBoundary> : <div className="empty-state">{t('missingCamera')}</div>}
     {camera && <svg className="composition-overlay" viewBox={`0 0 1600 ${1600 / shot.aspectRatio}`} preserveAspectRatio="none" aria-label={t('compositionGuides')}>
       <CameraOverlayContent labelScale={Math.max(1, Math.min(2,1600 / Math.max(1,frameWidth) * 10 / 22))} shot={shot} annotations={annotations} />{!annotations && <FocusDrawing shot={shot} />}

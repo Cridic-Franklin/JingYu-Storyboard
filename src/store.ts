@@ -4,6 +4,7 @@ import { defaultPlan, isLight } from './types';
 import type { PlanData, ObjectType, Overlay, Project, Shot, StageObject, TransformMode } from './types';
 import { makeObject, makeShot } from './lib/scene';
 import { t } from './i18n';
+import { useSettings } from './settings';
 
 import { projectStorage, migrateProject } from './storage/ProjectStorage';
 export { migrateProject };
@@ -156,7 +157,18 @@ export const useStore = create<State>((set, get) => {
       if (!object || object.locked) return;
       get().endTransaction(); editShot(shot => ({ ...shot, objects: shot.objects.filter(o => o.id !== id), motionPaths: shot.motionPaths.filter(p => p.objectId !== id), primaryCharacterId: shot.primaryCharacterId === id ? null : shot.primaryCharacterId, secondarySubjectId: shot.secondarySubjectId === id ? null : shot.secondarySubjectId, backgroundAnchorId: shot.backgroundAnchorId === id ? null : shot.backgroundAnchorId, focus: { ...shot.focus, targetId: shot.focus.targetId === id ? null : shot.focus.targetId }, primarySubjectId: shot.primarySubjectId === id ? null : shot.primarySubjectId, plan: { ...shot.plan, measurements: shot.plan.measurements.map(m => ({ ...m, a: m.a.objectId === id ? { position: [...object.position] } : m.a, b: m.b.objectId === id ? { position: [...object.position] } : m.b })) }, spatialDescription: '' })); set({ selectedId: null });
     },
-    selectObject: selectedId => set({ selectedId }), setMode: mode => set({ mode }),
+    selectObject: selectedId => { get().endTransaction('transform'); useSettings.setState({selectedPathId:null,selectedPathPointId:null}); set({ selectedId }); }, setMode: mode => { get().endTransaction('transform'); set({ mode }); },
     toggleOverlay: overlay => editShot(s => ({ ...s, overlays: s.overlays.includes(overlay) ? s.overlays.filter(o => o !== overlay) : [...s.overlays, overlay] })),
   };
+});
+
+// Selection can also change through add/duplicate, history, or project/shot switches.
+// Keep the single path-edit target valid across every such entry point.
+useStore.subscribe((state, previous) => {
+  const settings=useSettings.getState();
+  if(!settings.selectedPathId&&!settings.selectedPathPointId)return;
+  const shot=state.project.shots.find(s=>s.id===state.project.activeShotId);
+  const path=shot?.motionPaths.find(p=>p.id===settings.selectedPathId);
+  const owner=shot?.objects.find(o=>o.id===path?.objectId);
+  if(state.selectedId!==previous.selectedId||state.project.activeShotId!==previous.project.activeShotId||!path?.visible||!shot?.plan.layers.motionPaths||!owner?.visible||owner.locked||(settings.selectedPathPointId&&!path.points.some(p=>p.id===settings.selectedPathPointId)))useSettings.setState({selectedPathId:null,selectedPathPointId:null});
 });

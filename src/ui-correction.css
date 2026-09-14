@@ -41,6 +41,16 @@
 .shot-heading { height: 42px; min-height: 42px; }
 .shot-heading h1 { font-size: 14px; }
 .main-workspace { gap: 6px; }
+.shot-sidebar { overflow-y: auto; }
+.shot-workflow { flex-shrink: 0; border-top: 1px solid var(--border-default); }
+.shot-workflow > summary { cursor: pointer; padding: 12px; font-size: 12px; }
+.shot-workflow > button { margin: 8px; padding: 8px; }
+.shot-workflow-settings { max-height: 55vh; overflow: auto; }
+.shot-workflow-settings .inspector-section { padding: 12px; }
+.recent-project-row { border-bottom: 1px solid var(--border-default); }
+.recent-project-actions { display: flex; gap: 8px; }
+.recent-project-actions button { font-size: 10px; width: auto; flex: 1; }
+.project-confirm { border: 1px solid var(--border-strong); padding: 12px; margin-top: 12px; }
 .sequence-title { padding: 15px 10px 12px; letter-spacing: 0; }
 .shot-card { background: var(--sa-surface-tonal); margin-bottom: 9px; }
 .shot-card.active { border-color: var(--sa-divider-gold); }
@@ -149,10 +159,13 @@
 .ai-mode-switch button { min-height: 27px; font-size: 10px; color: var(--text-muted); }
 .ai-mode-switch button[aria-pressed=true] { border-color: var(--sa-divider-cyan); background: var(--sa-active-tonal); color: var(--sa-accent-system-soft); }
 .ai-result-label { display: flex; min-height: 84px; flex: 0 0 auto; flex-direction: column; gap: 5px; color: var(--text-secondary); font-size: 9px; }
-.ai-result-label textarea { height: 66px; min-height: 66px; }
+.ai-result-label textarea { height: 180px; min-height: 140px; resize: vertical; overflow: auto; flex: none; font-size: 13px; line-height: 1.75; padding: 10px; }
 .ai-enhance.has-suggestions > p:first-child { display: none; }
-.ai-enhance.has-suggestions .ai-result-label { min-height: 55px; }
-.ai-enhance.has-suggestions .ai-result-label textarea { height: 38px; min-height: 38px; }
+.ai-enhance.has-suggestions .ai-result-label { min-height: 160px; }
+.stage-panel { isolation: isolate; }
+.stage-content { overflow: hidden; }
+.description-panel .ai-enhance > * { flex-shrink: 0; }
+.description-panel .suggestion-card p, .description-panel .suggestion-card small { font-size: 12px; line-height: 1.7; }
 .ai-loading { padding: 5px 7px; border-left: 2px solid var(--sa-divider-cyan); background: var(--sa-active-tonal); }
 .ai-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .ai-actions button { min-width: 0; white-space: nowrap; }
@@ -191,3 +204,8 @@
   .stage-content > .scene-list { width: 135px; }
 }
 @media (prefers-reduced-motion: reduce) { [data-tooltip]::after, .thumbnail-actions { transition: none; } }
+@media (max-height: 820px) {
+  .viewport-tool-rail { top: 6px; gap: 1px; padding: 3px; }
+  .viewport-tool-rail > button { height: 24px; min-height: 24px; padding: 2px; }
+  .viewport-tool-rail .tool-divider { margin: 2px; }
+}

@@ -17,7 +17,7 @@ export function ViewportTools({ annotationControls }: { annotationControls?: Rea
   function activate(next: 'select' | 'pan' | 'translate' | 'rotate' | 'scale' | 'measure') {
     if (next === 'measure' && !annotationControls) useSettings.getState().setWorkspace('plan');
     useStore.getState().setMode(next === 'pan' || next === 'measure' ? 'select' : next);
-    useSettings.setState({ planTool: next === 'pan' || next === 'measure' ? next : 'select' });
+    useSettings.setState({ planTool: next === 'pan' || next === 'measure' ? next : 'select', poseMode: false });
     setOpen(false);
   }
   return <div className="viewport-tool-rail" ref={root} role="toolbar" aria-label={t('spatialEditor')}>
