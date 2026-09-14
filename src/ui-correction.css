@@ -51,7 +51,6 @@
 .camera-current span { color: var(--text-muted); font-size: 9px; letter-spacing: .05em; text-transform: uppercase; }
 .camera-current b { color: var(--text-primary); font-size: 12px; font-weight: 600; }
 .camera-workflow-settings .inspector-section { padding: 12px; }
-.camera-workflow-settings .camera-presets { margin: 0; border-inline: 0; }
 .recent-project-row { border-bottom: 1px solid var(--border-default); }
 .recent-project-actions { display: flex; gap: 8px; }
 .recent-project-actions button { font-size: 10px; width: auto; flex: 1; }

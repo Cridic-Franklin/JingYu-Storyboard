@@ -72,7 +72,7 @@ export function CameraPresets({ shot }: { shot: Shot }) {
  </div>;
 }
 export function CameraWorkflowSettings({ shot }: { shot: Shot }) {
-  return <div className="camera-workflow-settings"><ShotCameraSettings shot={shot} /><CameraPresets shot={shot} /><SpiralControls shot={shot} /><SubjectControls shot={shot} /><FocusControls shot={shot} /><SpatialRules shot={shot} /></div>;
+  return <div className="camera-workflow-settings"><ShotCameraSettings shot={shot} /><SpiralControls shot={shot} /><SubjectControls shot={shot} /><FocusControls shot={shot} /><SpatialRules shot={shot} /></div>;
 }
 export function ShotManagementSettings({ shot }: { shot: Shot }) {
   const t = useT();
