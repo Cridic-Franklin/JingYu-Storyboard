@@ -8,6 +8,10 @@ import { Icon } from './Icon';
 
 const categories: { label: MessageKey; types: ObjectType[] }[] = [
   { label: 'commonObjects', types: ['Character', 'Prop', 'Camera'] },
+  { label: 'furniture', types: ['Chair','Table','Desk','Sofa','Bed'] },
+  { label: 'architecture', types: ['Wall','Door','Window','Stairs'] },
+  { label: 'vehicle', types: ['Car','Van','Motorcycle'] },
+  { label: 'storyProps', types: ['Box','Shelf','Monitor','Lamp'] },
   { label: 'primitives', types: ['Cube', 'Sphere', 'Cylinder', 'Capsule', 'Cone', 'Plane'] },
   { label: 'lighting', types: ['DirectionalLight', 'PointLight', 'SpotLight'] },
 ];

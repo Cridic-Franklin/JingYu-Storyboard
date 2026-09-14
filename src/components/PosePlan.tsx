@@ -17,10 +17,12 @@ export function ProjectedBounds({object}:{object:StageObject}) {
 // Top projections of the same articulated segments, expressed relative to object origin.
 export function PosePlan({object}:{object:StageObject}) {
   const matrices=jointMatrices(object.pose??makePose()),world=objectMatrix(object);
+  const head=new Vector3().applyMatrix4(world.clone().multiply(matrices.head)).sub(new Vector3(...object.position));
+  const headYaw=(object.rotation[1]+(object.headFacingYaw??0))*Math.PI/180;
   return <g data-pose-footprint={object.id}>{joints.map(k=>{
     const d=skeleton[k],m=world.clone().multiply(matrices[k]);
     const p=(y:number)=>new Vector3(d.center[0],y,d.center[2]).applyMatrix4(m).sub(new Vector3(...object.position));
     const a=p(d.center[1]-(d.size[1]-d.size[0])/2),b=p(d.center[1]+(d.size[1]-d.size[0])/2),r=d.size[0]*Math.max(Math.abs(object.scale[0]),Math.abs(object.scale[2]));
     return <g key={k}><path d={`M${a.x},${a.z}L${b.x},${b.z}`} stroke="currentColor" strokeWidth={r} strokeLinecap="round"/><circle cx={b.x} cy={b.z} r={r/2}/></g>;
-  })}</g>;
+  })}<path data-head-facing d={`M${head.x},${head.z}L${head.x+Math.sin(headYaw)*.42},${head.z+Math.cos(headYaw)*.42}`} fill="none" stroke="#41C6CE" strokeWidth=".055" strokeLinecap="round"/><circle cx={head.x+Math.sin(headYaw)*.42} cy={head.z+Math.cos(headYaw)*.42} r=".065" fill="#41C6CE"/></g>;
 }

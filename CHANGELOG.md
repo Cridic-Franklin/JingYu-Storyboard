@@ -3,6 +3,32 @@
 所有面向用户的版本记录均按简体中文在前、英文在后的顺序编写。<br>
 All user-facing release notes are written in Simplified Chinese first, followed by English.
 
+## V0.98 — SceneAxis 产品化更新 / Productization Update
+
+### 简体中文
+
+- 正式接入 SceneAxis 品牌资产、深浅主题、全局导航、命令面板、上下文菜单与文字缩放设置。
+- 全局导航收口为 Shots、Objects、Scene、Characters、References、Create、Settings；Create 未来功能统一标记为即将推出，不提供伪操作。
+- SceneAxis Chromatic Divider 增加 Key / Soft 两级，增强同色阶表面层次并区分 Theme、Lighting、Settings 与 Search 图标语义。
+- 新增镜头序列、类型、时长、Notes，以及 PNG/JPEG 参考图选择/拖放、适配/填充、替换/删除与持久化。
+- 扩展家具、建筑、车辆与道具低模库；升级 Character 2.0 可读人体结构、独立头部朝向和语义类型。
+- 新增对象运动路径，支持有序点编辑、显示切换以及 Spatial 3D / Plan 2D 同步直线或平滑曲线。
+- 运动路径扩展为视口直接选择和拖动节点、Add / Delete、Linear / Auto Smooth；Camera 使用 Gold，Character / Object 使用 Cyan。
+- 升级 Spatial Description v3，并新增 Faithful / Director 与结构化 Current Shot Suggestions；本地确定性结果始终为事实来源和失败回退。
+- 项目 schema 升级为 6，旧容器继续可读并在迁移前备份。AI 密钥仅保留在运行内存中。
+
+### English
+
+- Integrated official SceneAxis brand assets, dark/light themes, global navigation, command palette, context menus and text scaling.
+- Finalized global navigation as Shots, Objects, Scene, Characters, References, Create and Settings. Future Create modules are uniformly labeled Coming Soon and expose no fake actions.
+- Added Key / Soft SceneAxis Chromatic Dividers, stronger tonal surfaces and distinct Theme, Lighting, Settings and Search icon semantics.
+- Added shot sequence, type, duration and Notes, plus persistent PNG/JPEG reference picker/drop, fit/fill, replace and delete workflows.
+- Expanded furniture, architecture, vehicle and prop proxies; upgraded Character 2.0 anatomy, independent head facing and semantic type.
+- Added object motion paths with ordered point editing, visibility and synchronized straight/smoothed rendering in Spatial 3D and Plan 2D.
+- Extended motion paths with direct viewport point selection/drag, add/delete and Linear / Auto Smooth; Camera uses gold while Character / Object use cyan.
+- Upgraded Spatial Description v3 with Faithful / Director interpretation and structured Current Shot Suggestions; local deterministic output remains the source of truth and failure fallback.
+- Advanced the project schema to 6, retained legacy containers and added pre-migration backup. AI keys remain in runtime memory only.
+
 ## V0.96 — UI Professionalization Update
 
 ### 简体中文

@@ -76,7 +76,14 @@ export function analyzeShot(shot: Shot) {
     return {...info, ...(object.type==='Character'?{pose:object.pose??makePose()}:{}), ...(object.asset?{asset:{format:object.asset.format,filename:object.asset.filename}}:{}),visibility:visibility(info.screen),screenRegion:screenRegion(info.screen),depthLayer,characterRegion:object.type==='Character'?characterRegion(object,shot):null,
       relations:reference&&reference.id!==object.id?{subject:{space:'subject',referenceId:reference.id,direction:relation(shot,object,reference,'subject')},screen:{space:'screen',referenceId:reference.id,direction:relation(shot,object,reference,'screen')},distanceMeters:new Vector3(...object.position).distanceTo(new Vector3(...reference.position))}:null};
   });
-  return {...data,version:2,shot:{...data.shot,primaryCharacterId:shot.primaryCharacterId,primaryVisualSubjectId:shot.primarySubjectId,secondarySubjectId:shot.secondarySubjectId,backgroundAnchorId:shot.backgroundAnchorId},camera:data.camera?{...data.camera,lensMm:fovToLens(data.camera.verticalFovDegrees),verticalGateMm:24}:null,objects,hardConstraints:shot.hardConstraints,validation:validateConstraints(shot)};
+  const relationships=objects.flatMap((a,index)=>objects.slice(index+1).map(b=>{
+    const oa=shot.objects.find(o=>o.id===a.id)!,ob=shot.objects.find(o=>o.id===b.id)!;
+    const distance=new Vector3(...oa.position).distanceTo(new Vector3(...ob.position));
+    const vertical=oa.position[1]>ob.position[1]+.05?'above':oa.position[1]<ob.position[1]-.05?'below':'sameHeight';
+    return { objectId:a.id,referenceId:b.id,distanceMeters:distance,proximity:distance<2?'near':distance>8?'far':'medium',subjectRelation:relation(shot,oa,ob,'subject'),screenRelation:relation(shot,oa,ob,'screen'),depthRelation:relation(shot,oa,ob,'depth'),verticalRelation:vertical,orientation:relation(shot,oa,ob,'orientation') };
+  }));
+  const cameraObject=shot.objects.find(o=>o.type==='Camera'),cameraForward=cameraObject?semanticForward(cameraObject):null;
+  return {...data,version:3,shot:{...data.shot,primaryCharacterId:shot.primaryCharacterId,primaryVisualSubjectId:shot.primarySubjectId,secondarySubjectId:shot.secondarySubjectId,backgroundAnchorId:shot.backgroundAnchorId},camera:data.camera?{...data.camera,lensMm:fovToLens(data.camera.verticalFovDegrees),verticalGateMm:24,shotSize:objects.length?objects.some(o=>o.visibility.visibleFraction>.65)?'close':objects.some(o=>o.visibility.visibleFraction>.28)?'medium':'wide':'empty',cameraAngle:cameraForward&&cameraForward.y>.15?'low':cameraForward&&cameraForward.y<-.15?'high':'eyeLevel'}:null,objects,relationships,hardConstraints:shot.hardConstraints,validation:validateConstraints(shot)};
 }
 export function semanticDescription(shot: Shot, language: Language=useSettings.getState().language): string {
   const tr=(k: MessageKey,v?:Record<string,string|number>)=>translate(language,k,v),data=analyzeShot(shot),cam=shot.objects.find(o=>o.type==='Camera');

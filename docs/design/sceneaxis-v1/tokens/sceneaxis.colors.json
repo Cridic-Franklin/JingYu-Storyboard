@@ -1,0 +1,33 @@
+{
+  "brand": {
+    "axisCyan": "#41C6CE",
+    "axisCyanSoft": "#8CDDE1",
+    "cinemaGold": "#D6A84F",
+    "cinemaGoldStrong": "#E7B85E"
+  },
+  "dark": {
+    "bgPrimary": "#0B0F12",
+    "bgSecondary": "#121A20",
+    "surface": "#18232C",
+    "surfaceElevated": "#23313B",
+    "textPrimary": "#F1F5F7",
+    "textSecondary": "#A6B4BE",
+    "border": "#2F3B46",
+    "focus": "#41C6CE"
+  },
+  "light": {
+    "bgPrimary": "#F4F6F7",
+    "bgSecondary": "#E9EEF0",
+    "surface": "#FFFFFF",
+    "surfaceElevated": "#F7F9FA",
+    "textPrimary": "#11181D",
+    "textSecondary": "#5C6973",
+    "border": "#CCD5DA",
+    "focus": "#167F86"
+  },
+  "status": {
+    "success": "#45B87A",
+    "warning": "#DCA44A",
+    "error": "#D85B60"
+  }
+}

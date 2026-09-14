@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-labelledby="title desc">
+  <title id="title">SceneAxis Glyph — Light</title>
+  <desc id="desc">A cinematic field-of-view symbol intersected by a spatial axis.</desc>
+  <defs>
+    <linearGradient id="leftCyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#178D95" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#41C6CE" stop-opacity="0.34"/>
+    </linearGradient>
+    <linearGradient id="rightCyan" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#41C6CE" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#178D95" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <polygon points="28,128 126,84 126,172" fill="url(#leftCyan)" stroke="#178D95" stroke-width="2"/>
+  <polygon points="132,128 226,62 226,194" fill="url(#rightCyan)" stroke="#178D95" stroke-width="2"/>
+  <line x1="129" y1="28" x2="129" y2="228" stroke="#10161B" stroke-width="10" stroke-linecap="round"/>
+  <circle cx="129" cy="128" r="13" fill="#10161B"/>
+</svg>

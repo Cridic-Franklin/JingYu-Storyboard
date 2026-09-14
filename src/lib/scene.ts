@@ -15,12 +15,13 @@ export function cameraRotation(position: Vec3, target: Vec3): Vec3 {
 }
 export function makeObject(type: ObjectType, count = 0): StageObject {
   const position: Vec3 = type === 'Camera' ? [4, 2.8, 7] : type === 'Prop' ? [1.4, 0, 0.6] : [count * 0.5, 0, 0];
+  const semanticType = type.toLowerCase();
   return { id: crypto.randomUUID(), type, ...(type === 'Character' ? { pose: makePose() } : {}), name: type === 'Camera' ? t('storyboardCamera') : `${t(type)}${count ? ` ${count + 1}` : ''}`, semanticName: '', position,
-    ...(isLight({ type }) ? { light: defaultLight() } : {}), rotation: type === 'Camera' ? cameraRotation(position, [0, 1, 0]) : [0, 0, 0], scale: [1, 1, 1], fov: 45, visible: true, locked: false, frontYaw: 0, frontLabel: type === 'Prop' ? t('interfaceFront') : '' };
+    semanticType, ...(type === 'Character' ? { headFacingYaw: 0 } : {}), ...(isLight({ type }) ? { light: defaultLight() } : {}), rotation: type === 'Camera' ? cameraRotation(position, [0, 1, 0]) : [0, 0, 0], scale: [1, 1, 1], fov: 45, visible: true, locked: false, frontYaw: 0, frontLabel: type === 'Prop' ? t('interfaceFront') : '' };
 }
 export function makeShot(number: number): Shot {
   return { id: crypto.randomUUID(), number, spiral: defaultSpiral(), useEditorColors: false, aspectRatio: 16 / 9, focus: defaultFocus(), environment: defaultEnvironment(), primaryCharacterId: null, secondarySubjectId: null, backgroundAnchorId: null, hardConstraints: [], includeTechnical: false, title: t('untitledShot'), description: '', status: 'Draft', image: null,
-    objects: [makeObject('Camera')], overlays: ['thirds'], spatialDescription: '', plan: defaultPlan(), annotations: defaultAnnotations(), primarySubjectId: null, constraints: '', negativeConstraints: '' };
+    duration: 5, sequence: '01', shotType: 'Establishing', references: [], motionPaths: [], notes: '', aiEnhancement: '', objects: [makeObject('Camera')], overlays: ['thirds'], spatialDescription: '', plan: defaultPlan(), annotations: defaultAnnotations(), primarySubjectId: null, constraints: '', negativeConstraints: '' };
 }
 export const presets = ['Wide', 'Medium', 'Close', 'Low Angle', 'High Angle'] as const;
 export function presetCamera(name: typeof presets[number], subject: Vec3): Partial<StageObject> {
@@ -34,6 +35,10 @@ export function localBounds(object: StageObject): Box3 {
   const dimensions: Record<ObjectType, [Vec3, Vec3]> = {
     OBJ: [[-.5,0,-.5],[.5,1,.5]],
     Character: [[-0.4, 0, -0.2], [0.4, 1.8, 0.23]], Prop: [[-0.3, 0, -0.3], [0.3, 0.96, 0.3]],
+    Chair: [[-.45,0,-.45],[.45,1,.45]], Table: [[-1,0,-.65],[1,.78,.65]], Desk: [[-1.1,0,-.65],[1.1,.82,.65]], Sofa: [[-1.2,0,-.5],[1.2,.9,.5]], Bed: [[-1,0,-2],[1,.55,2]],
+    Wall: [[-2,0,-.1],[2,2.8,.1]], Door: [[-.5,0,-.08],[.5,2.1,.08]], Window: [[-.8,.8,-.08],[.8,2,.08]], Stairs: [[-1,0,-1.5],[1,1.5,1.5]],
+    Car: [[-1,0,-2.2],[1,1.45,2.2]], Van: [[-1.05,0,-2.4],[1.05,2.15,2.4]], Motorcycle: [[-.45,0,-1.05],[.45,1.25,1.05]],
+    Box: [[-.5,0,-.5],[.5,1,.5]], Shelf: [[-.65,0,-.25],[.65,1.8,.25]], Monitor: [[-.45,0,-.12],[.45,.62,.12]], Lamp: [[-.3,0,-.3],[.3,1.6,.3]],
     Cube: [[-0.5, 0, -0.5], [0.5, 1, 0.5]], Sphere: [[-0.5, 0, -0.5], [0.5, 1, 0.5]],
     Cylinder: [[-0.5, 0, -0.5], [0.5, 1, 0.5]], Cone: [[-0.5, 0, -0.5], [0.5, 1, 0.5]],
     Capsule: [[-0.3, 0, -0.3], [0.3, 1.5, 0.3]], Plane: [[-1.5, 0, -1.5], [1.5, 0.025, 1.5]],

@@ -1,4 +1,4 @@
-# 镜域 JingYu
+# 镜域 SceneAxis
 
 **Spatial Storyboard Planning & AI Communication Tool**<br>
 **空间分镜规划与 AI 沟通工具**
@@ -7,11 +7,17 @@
 
 **在线体验 / Live demo:** [https://jing-yu-storyboard.vercel.app](https://jing-yu-storyboard.vercel.app)
 
-## ❤️ 支持镜域 / Support JingYu
+## 界面预览 / UI preview
+
+![SceneAxis V0.98 深色工作区](docs/screenshots/sceneaxis-v098-dark.png)
+
+![SceneAxis V0.98 浅色工作区](docs/screenshots/sceneaxis-v098-light.png)
+
+## ❤️ 支持镜域 / Support SceneAxis
 
 如果镜域对你的创作有所帮助，欢迎通过爱发电支持项目的持续开发与维护。
 
-If JingYu is useful to your creative workflow, you can support its continued development on Afdian.
+If SceneAxis is useful to your creative workflow, you can support its continued development on Afdian.
 
 **爱发电 / Afdian:** [https://afdian.com/a/Cridic223](https://afdian.com/a/Cridic223)
 
@@ -23,7 +29,7 @@ If JingYu is useful to your creative workflow, you can support its continued dev
 
 ### 项目简介
 
-镜域是一款面向动画、分镜与视觉开发工作者的本地 Web 应用，用于快速搭建镜头空间、检查构图，并把导演意图整理成清晰的画面与语义信息。项目使用 React、TypeScript、Vite、Three.js、React Three Fiber、drei、Zustand 与 Dexie 构建，无需后端、账号、云服务或 AI API。
+镜域 SceneAxis 是一款面向动画、分镜与视觉开发工作者的本地优先 Web 应用，用于快速搭建镜头空间、检查构图，并把导演意图整理成清晰的画面与语义信息。项目使用 React、TypeScript、Vite、Three.js、React Three Fiber、drei、Zustand 与 Dexie 构建，无需后端、账号或云端项目服务；AI 文案增强为用户主动启用的可选直连能力。
 
 镜域不是 Blender、Maya、Photoshop、Premiere 或完整 DCC。资产在镜头中被摆放和调度，而不是被建模；3D 只服务于场面调度、空间推理和构图。
 
@@ -45,7 +51,7 @@ If JingYu is useful to your creative workflow, you can support its continued dev
 - 摄影机焦距、画幅比例、景别、机位角度、光学焦点、视觉重点区域和构图辅助线。
 - 三分构图、中心十字、安全框，以及可调整方向、镜像、偏移和缩放的黄金螺旋。
 - 平面图测量、标注草图、朝向、灯光方向和摄影机视锥。草图始终是标注，不会成为场景几何。
-- 可导入 PNG、JPEG、WebP 或 GIF 分镜参考图；检查器会显示对象画面中心与近似投影边界百分比。
+- 可在镜头卡片导入或拖放 PNG / JPEG 分镜参考图，支持预览、Fit / Fill、替换、移除与本地持久化；检查器会显示对象画面中心与近似投影边界百分比。
 - 简洁的空间语义描述、结构化约束检查和 AI 空间 JSON，不调用任何 AI 服务。
 - 摄影机画面、导演画面、AI 空间参考画面、平面图、TXT、JSON、AI 镜头包 ZIP 与 AI 参考板导出。
 - `.jyproject` 打开 / 保存 / 另存为、IndexedDB 自动保存、旧项目迁移与存储失败保护。
@@ -65,14 +71,16 @@ If JingYu is useful to your creative workflow, you can support its continued dev
 
 ### 当前版本
 
-当前稳定版本为 **V0.96 — UI 专业化升级**。
+当前候选版本为 **V0.98 — SceneAxis Productization Update**；V0.96 仍是最近的正式 Tag，V0.98 尚待人工 RC 验收。
 
-- 建立统一的深色桌面工作区 Design Token，统一间距、边框、圆角、层级和交互状态。
-- 优化顶部导航、镜头列表、主工作区工具栏、Spatial 3D、Plan View、Camera View、Camera Preview、空间描述和 Inspector。
-- 优化项目弹窗、空状态、Loading / Error 状态、中英文界面、窄桌面 Export Toolbar 及 Reduced Motion 适配。
-- 统一面板控制 SVG 图标，并补充 [UI Design System](docs/UI_DESIGN_SYSTEM.md)。
+- 七域全局导航：Shots、Objects、Scene、Characters、References、Create、Settings；Create 中的 Script、Shot Planning、AI Storyboard 仅作为明确标注的 Coming Soon 预览。
+- SceneAxis Chromatic Divider 的 Key / Soft 两级系统、增强后的同色阶表面，以及完整 Dark / Light Theme。
+- Character 2.0 Blocking Mannequin、可识别的家具 / 建筑 / Car / Van / Motorcycle 低模基础体。
+- Camera、Character 与对象共享运动路径；Spatial 3D / Plan 2D 可选中和拖动节点，支持 Linear / Auto Smooth、显示与增删节点。
+- Spatial Description v3 与 AI Semantic & Creative Assistance Layer：Faithful、Director、Current Shot Suggestions；AI 不修改 Scene Graph。
+- PNG/JPEG 镜头卡片参考图、拖放、持久化、项目 schema 6 与旧项目安全迁移。
 
-本次更新专注于 UI / UX 专业化升级；共享 Scene Graph、项目数据结构、持久化逻辑和核心业务逻辑保持不变。完整更新记录见 [CHANGELOG](CHANGELOG.md)，历史验证范围见 [V0.95 验证记录](docs/VERIFICATION_V095.md)。
+完整范围见 [V0.98 规格](docs/V0.98_SPEC.md)、[更新记录](CHANGELOG.md)与[发布说明](docs/RELEASE_NOTES_V098.md)。
 
 ### 控制与约定
 
@@ -106,7 +114,7 @@ pnpm preview --port 5173
 
 ### 项目文件
 
-`.jyproject` 是自包含的 UTF-8 JSON 文件。当前便携容器版本为 1，项目 `schemaVersion` 为 5；它们与应用版本号是不同的版本域。
+`.jyproject` 是自包含的 UTF-8 JSON 文件。当前便携容器版本为 1，项目 `schemaVersion` 为 6；它们与应用版本号是不同的版本域。
 
 - 对象 ID、名称、类型、变换、可见性、锁定、角色姿势、显示颜色与导入 OBJ 几何会随项目保存。
 - 镜头画幅、摄影机、焦点、构图辅助线、主体角色、空间约束、平面图标注与分镜参考图也会保存。
@@ -118,7 +126,7 @@ pnpm preview --port 5173
 
 ### AI 导出工作流
 
-镜域不生成图片，也不调用 AI API。它把场景中已有的空间决策整理成人和外部 AI 工作流都容易理解的资料：
+镜域不生成图片。本地确定性 Spatial Description 与导出不依赖 AI；用户可在设置中临时输入 DeepSeek 或 OpenAI-compatible 的 API Endpoint、Model 与 Key，主动请求 Faithful / Director 表达或当前镜头建议。中文 UI 要求中文输出，English UI 要求 English 输出；用户对象名保持原样。密钥仅保留在当前标签页内存中，不会持久化。浏览器直连仍受 Provider 的 CORS 与可用性限制。
 
 - **Clean Frame**：只包含摄影机渲染，默认关闭辅助线、焦点与工程标注。
 - **Director Frame**：包含当前构图辅助线和焦点 / 重点区域。
@@ -152,13 +160,18 @@ Web 仍是应用核心。未来如提供 Tauri 桌面版，应作为同一 React
 
 安全问题请参阅[安全政策](SECURITY.md)。本仓库采用[保留所有权利的版权与使用声明](LICENSE)；公开源代码仅供查看与评估，不授予复制、修改、分发或商业使用许可。
 
+### 贡献与反馈
+
+请使用 GitHub Issues 提交可复现的 Bug、功能建议与工作流反馈。报告 Bug 时请附浏览器、系统、复现步骤、预期结果、实际结果及不含敏感信息的截图；请勿提交 API Key、私有项目文件或未获授权的素材。
+
 ### 验证
 
-`pnpm build` 会执行 TypeScript 项目检查并生成生产构建。V0.95 的定向浏览器脚本使用独立 Chrome 配置，不会修改用户项目，也没有向应用加入测试依赖：
+`pnpm build` 会执行 TypeScript 项目检查并生成生产构建。V0.98 的定向浏览器脚本使用独立 Chrome 配置，不会修改用户项目，也没有向应用加入测试依赖：
 
 ```sh
-node scripts/verify-v095.cjs
-node scripts/verify-v095-edges.cjs
+node scripts/verify-v098.cjs
+node scripts/verify-ui-correction.cjs
+node scripts/verify-v098-final-polish.cjs
 ```
 
 可通过 `PLAYWRIGHT_MODULE` 指定外部 Playwright 安装，通过 `APP_URL` 指定 Vite 实际地址。历史 V0.9 与 V0.3 验证仍保留在 [V0.9 验证记录](docs/VERIFICATION_V09.md)和 [V0.3 验证记录](docs/VERIFICATION.md)中。
@@ -171,9 +184,9 @@ node scripts/verify-v095-edges.cjs
 
 ### Project introduction
 
-JingYu is a local web application for animation, storyboard and visual-development artists to block shot space, inspect composition and express directing intent as clear visual and semantic information. It is built with React, TypeScript, Vite, Three.js, React Three Fiber, drei, Zustand and Dexie. It requires no backend, account, cloud service or AI API.
+SceneAxis is a local-first web application for animation, storyboard and visual-development artists to block shot space, inspect composition and express directing intent as clear visual and semantic information. It is built with React, TypeScript, Vite, Three.js, React Three Fiber, drei, Zustand and Dexie. It requires no backend, account or cloud project service; optional AI prose enhancement is an explicit user-triggered direct-provider feature.
 
-JingYu is not Blender, Maya, Photoshop, Premiere or a full DCC. Assets are positioned and blocked rather than modeled; 3D exists for staging, spatial reasoning and composition.
+SceneAxis is not Blender, Maya, Photoshop, Premiere or a full DCC. Assets are positioned and blocked rather than modeled; 3D exists for staging, spatial reasoning and composition.
 
 ### Core purpose
 
@@ -193,7 +206,7 @@ JingYu is not Blender, Maya, Photoshop, Premiere or a full DCC. Assets are posit
 - Camera aspect, lens, shot size, camera angle, optical focus, visual focus regions and composition guides.
 - Rule of Thirds, Center Cross, Safe Frame and an adjustable Golden Spiral with orientation, mirror, offset and scale controls.
 - Plan measurements, sketch annotations, facing, light direction and camera frustum. Sketches remain annotations and never become scene geometry.
-- PNG, JPEG, WebP or GIF storyboard reference images; Inspector screen-center and approximate projected-bounds percentages.
+- Shot-card PNG/JPEG storyboard reference import and drop with preview, fit/fill, replace, remove and local persistence; Inspector screen-center and approximate projected-bounds percentages.
 - Concise spatial descriptions, structured constraint validation and AI spatial JSON without calling an AI service.
 - Camera, Director and AI Spatial frames; Plan, TXT, JSON, AI Shot Packet ZIP and AI Reference Board export.
 - `.jyproject` Open / Save / Save As, IndexedDB autosave, legacy migration and storage-failure protection.
@@ -213,14 +226,16 @@ Duplicate Shot creates fresh shot and object IDs while copying spatial data, cam
 
 ### Current version
 
-The current stable release is **V0.96 — UI Professionalization Update**.
+The current candidate is **V0.98 — SceneAxis Productization Update**. V0.96 remains the latest formal tag until V0.98 completes human RC acceptance.
 
-- Established unified dark desktop-workspace design tokens for spacing, borders, radii, hierarchy and interaction states.
-- Refined top navigation, Shot List, workspace toolbar, Spatial 3D, Plan View, Camera View, Camera Preview, Spatial Description and Inspector.
-- Refined project dialogs, empty, loading and error states, bilingual UI, narrow-desktop export toolbar behavior and reduced-motion support.
-- Standardized SVG panel-control icons and added the [UI Design System](docs/UI_DESIGN_SYSTEM.md).
+- Seven global domains: Shots, Objects, Scene, Characters, References, Create and Settings. Script, Shot Planning and AI Storyboard in Create are explicitly labeled Coming Soon previews only.
+- Key / Soft SceneAxis Chromatic Dividers, stronger tonal surfaces and complete dark/light themes.
+- Character 2.0 Blocking Mannequin and recognizable low-poly furniture, architecture, Car, Van and Motorcycle proxies.
+- Shared Camera, Character and object motion paths with direct point selection/drag in Spatial 3D and Plan 2D, plus Linear / Auto Smooth, visibility and point add/delete controls.
+- Spatial Description v3 and the AI Semantic & Creative Assistance Layer: Faithful, Director and Current Shot Suggestions. AI never mutates the Scene Graph.
+- Shot-card PNG/JPEG references with drag/drop and persistence, project schema 6 and safe legacy migration.
 
-This release is a UI/UX professionalization update. The shared Scene Graph, project data structure, persistence logic and core business logic remain unchanged. See the full [CHANGELOG](CHANGELOG.md) and the historical [V0.95 verification record](docs/VERIFICATION_V095.md).
+See the [V0.98 specification](docs/V0.98_SPEC.md), full [CHANGELOG](CHANGELOG.md) and [release notes](docs/RELEASE_NOTES_V098.md).
 
 ### Controls and conventions
 
@@ -254,7 +269,7 @@ pnpm preview --port 5173
 
 ### Project format
 
-`.jyproject` is self-contained UTF-8 JSON. The current portable container version is 1 and project `schemaVersion` is 5; these are separate version domains from the application release number.
+`.jyproject` is self-contained UTF-8 JSON. The current portable container version is 1 and project `schemaVersion` is 6; these are separate version domains from the application release number.
 
 - Object IDs, names, types, transforms, visibility, locks, Character poses, display colors and imported OBJ geometry are stored in the project.
 - Shot aspect, camera, focus, guides, subject roles, spatial constraints, Plan annotations and storyboard reference images are stored as well.
@@ -266,7 +281,7 @@ See [Project format](docs/PROJECT_FORMAT.md) for the detailed format and migrati
 
 ### AI export workflow
 
-JingYu does not generate images or call AI APIs. It packages spatial decisions already present in the scene into material that people and external AI workflows can interpret:
+SceneAxis does not generate images. Deterministic local Spatial Description and exports require no AI. In Settings, users may temporarily enter a DeepSeek or OpenAI-compatible API endpoint, model and key, then explicitly request Faithful / Director interpretation or current-shot suggestions. Chinese UI requests Chinese output, English UI requests English output, and user-defined object names remain unchanged. The key lives only in the current tab's memory and is never persisted. Direct browser requests remain subject to provider availability and CORS.
 
 - **Clean Frame**: camera render only, with guides, focus and engineering annotations off by default.
 - **Director Frame**: current composition guides and focus point / region.
@@ -300,13 +315,18 @@ See [Architecture](docs/ARCHITECTURE.md), [Release and platform plan](docs/RELEA
 
 See the [Security Policy](SECURITY.md) for vulnerability reporting. This repository uses an [all-rights-reserved copyright and use notice](LICENSE); public source access does not grant permission to copy, modify, distribute or use the project commercially.
 
+### Contributions and feedback
+
+Use GitHub Issues for reproducible bugs, feature requests and workflow feedback. Bug reports should include browser, operating system, reproduction steps, expected and actual behavior, and screenshots without sensitive information. Never submit API keys, private project files or unlicensed assets.
+
 ### Verification
 
-`pnpm build` runs the TypeScript project checks and creates the production bundle. The targeted V0.95 browser scripts use isolated Chrome profiles, do not touch user projects and add no testing dependency to the application:
+`pnpm build` runs the TypeScript project checks and creates the production bundle. The targeted V0.98 browser scripts use isolated Chrome profiles, do not touch user projects and add no testing dependency to the application:
 
 ```sh
-node scripts/verify-v095.cjs
-node scripts/verify-v095-edges.cjs
+node scripts/verify-v098.cjs
+node scripts/verify-ui-correction.cjs
+node scripts/verify-v098-final-polish.cjs
 ```
 
 Set `PLAYWRIGHT_MODULE` for an external Playwright installation and `APP_URL` for the actual Vite address when needed. Historical V0.9 and V0.3 evidence remains in the [V0.9 verification record](docs/VERIFICATION_V09.md) and [V0.3 verification record](docs/VERIFICATION.md).

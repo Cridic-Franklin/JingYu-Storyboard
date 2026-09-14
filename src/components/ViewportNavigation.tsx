@@ -19,10 +19,11 @@ export function ViewportNavigation() {
     const disabled: { enabled: boolean }[] = [];
     const press = (event: PointerEvent) => {
       if (!ref.current) return;
-      navigating = event.altKey;
+      const panTool = useSettings.getState().planTool === 'pan';
+      navigating = event.altKey || panTool;
       dollying = navigating && event.button === 2;
       lastX = event.clientX; lastY = event.clientY;
-      ref.current.mouseButtons = event.altKey ? { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.PAN, RIGHT: undefined } : { LEFT: undefined, MIDDLE: undefined, RIGHT: undefined };
+      ref.current.mouseButtons = panTool && !event.altKey ? { LEFT: MOUSE.PAN, MIDDLE: MOUSE.PAN, RIGHT: undefined } : event.altKey ? { LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.PAN, RIGHT: undefined } : { LEFT: undefined, MIDDLE: undefined, RIGHT: undefined };
       if (dollying) canvas.setPointerCapture(event.pointerId);
       if (navigating) {
         useSettings.getState().setNavigating(true);

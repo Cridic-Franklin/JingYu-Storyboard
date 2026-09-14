@@ -2,7 +2,7 @@ import { validatePose } from '../lib/pose';
 import { validateObj } from '../lib/obj';
 import { validateSpiral } from '../lib/spiral';
 import Dexie, { type Table } from 'dexie';
-import { defaultAnnotations, defaultPlan, defaultFocus, defaultEnvironment, defaultLight, isLight, type Project, type Shot, type StageObject } from '../types';
+import { defaultAnnotations, defaultPlan, defaultFocus, defaultEnvironment, defaultLight, isLight, type MotionPath, type Project, type Shot, type StageObject } from '../types';
 
 export interface ProjectSummary { id: string; name: string; updatedAt: string }
 export interface ProjectStorage {
@@ -26,12 +26,12 @@ const record = (v: unknown): Record<string, unknown> => {
   return v as Record<string, unknown>;
 };
 const vector = (v: unknown) => Array.isArray(v) && v.length === 3 && v.every(n => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) < 1e6);
-const types = ['OBJ', 'Character', 'Prop', 'Camera', 'Cube', 'Sphere', 'Cylinder', 'Capsule', 'Cone', 'Plane', 'DirectionalLight', 'PointLight', 'SpotLight'];
+const types = ['OBJ', 'Character', 'Prop', 'Chair', 'Table', 'Desk', 'Sofa', 'Bed', 'Wall', 'Door', 'Window', 'Stairs', 'Car', 'Van', 'Motorcycle', 'Box', 'Shelf', 'Monitor', 'Lamp', 'Camera', 'Cube', 'Sphere', 'Cylinder', 'Capsule', 'Cone', 'Plane', 'DirectionalLight', 'PointLight', 'SpotLight'];
 const text = (v: unknown, fallback = '') => typeof v === 'string' ? v : fallback;
 export function migrateProject(input: unknown): Project {
   const raw = record(input);
   if (raw.schemaVersion !== undefined && (!Number.isInteger(raw.schemaVersion) || Number(raw.schemaVersion) < 1)) throw new Error('Invalid project schema version.');
-  if (typeof raw.schemaVersion === 'number' && raw.schemaVersion > 5) throw new Error('This project needs a newer version of JingYu. Its data was not changed.');
+  if (typeof raw.schemaVersion === 'number' && raw.schemaVersion > 6) throw new Error('This project needs a newer version of SceneAxis. Its data was not changed.');
   if (typeof raw.id !== 'string' || !Array.isArray(raw.shots) || raw.shots.length > 1000) throw new Error('Invalid project ID or shot list.');
   const allIds = new Set<string>();
   const shots = raw.shots.map(value => {
@@ -45,12 +45,13 @@ export function migrateProject(input: unknown): Project {
       if (['visible', 'locked'].some(k => o[k] !== undefined && typeof o[k] !== 'boolean')) throw new Error('Invalid object visibility or lock state.');
       if (o.fov !== undefined && (typeof o.fov !== 'number' || !Number.isFinite(o.fov) || o.fov < 1 || o.fov > 179)) throw new Error('Invalid camera field of view.');
       if (o.frontYaw !== undefined && (typeof o.frontYaw !== 'number' || !Number.isFinite(o.frontYaw))) throw new Error('Invalid semantic front direction.');
+      if (o.headFacingYaw !== undefined && (typeof o.headFacingYaw !== 'number' || !Number.isFinite(o.headFacingYaw))) throw new Error('Invalid head facing direction.');
       const light = isLight({ type: String(o.type) }) ? { ...defaultLight(), ...(o.light ? record(o.light) : {}) } : undefined;
       if (light && (!/^#[0-9a-f]{6}$/i.test(light.color) || !Number.isFinite(light.intensity) || light.intensity < 0 || light.intensity > 10000 || !Number.isFinite(light.range) || light.range < 0 || light.range > 1000 || !Number.isFinite(light.coneAngle) || light.coneAngle < 1 || light.coneAngle > 170 || typeof light.castShadow !== 'boolean')) throw new Error('Invalid light settings.');
       if(o.displayColor !== undefined && (typeof o.displayColor !== 'string' || !/^#[0-9a-f]{6}$/i.test(o.displayColor))) throw new Error('Invalid editor color.');
       const pose = o.type === 'Character' ? validatePose(o.pose) : undefined;
       const asset = o.type === 'OBJ' ? validateObj(o.asset) : undefined;
-      return { ...o, ...(pose ? {pose} : {}), ...(asset ? {asset} : {}), ...(light ? { light } : {}), name: text(o.name, String(o.type)), semanticName: text(o.semanticName), visible: o.visible ?? true, locked: o.locked ?? false, fov: o.fov ?? 45, frontYaw: o.frontYaw ?? 0, frontLabel: text(o.frontLabel) } as unknown as StageObject;
+      return { ...o, ...(pose ? {pose} : {}), ...(asset ? {asset} : {}), ...(light ? { light } : {}), ...(o.type === 'Character' ? { headFacingYaw: Number(o.headFacingYaw ?? 0) } : {}), name: text(o.name, String(o.type)), semanticName: text(o.semanticName), semanticType: text(o.semanticType, String(o.type).toLowerCase()), visible: o.visible ?? true, locked: o.locked ?? false, fov: o.fov ?? 45, frontYaw: o.frontYaw ?? 0, frontLabel: text(o.frontLabel) } as unknown as StageObject;
     });
     if (objects.filter(o => o.type === 'Camera').length > 1) throw new Error('Multiple active cameras are not supported in this version. No data was removed.');
     if (shot.overlays !== undefined && (!Array.isArray(shot.overlays) || !shot.overlays.every(k => ['thirds', 'cross', 'safe', 'spiral'].includes(String(k))))) throw new Error('Unsupported composition guides. No data was changed.');
@@ -65,6 +66,10 @@ export function migrateProject(input: unknown): Project {
       if (!s || typeof s.id !== 'string' || !['pen', 'marker', 'arrow', 'text'].includes(s.tool) || !/^#[0-9a-f]{6}$/i.test(s.color) || !Number.isFinite(s.size) || s.size <= 0 || s.size > 2 || !Array.isArray(s.points) || s.points.length > 50000 || !s.points.every(p => Array.isArray(p) && p.length === 2 && p.every(Number.isFinite))) throw new Error('Invalid sketch data.');
     }
     for (const m of plan.measurements) if (!m || typeof m.id !== 'string' || !m.a || !m.b || !vector(m.a.position) || !vector(m.b.position)) throw new Error('Invalid measurement data.');
+    const references = Array.isArray(shot.references) ? shot.references : typeof shot.image === 'string' && /^data:image\/(png|jpeg);base64,/.test(shot.image) ? [{ id: crypto.randomUUID(), role: 'storyboard', name: 'Storyboard reference', mimeType: shot.image.startsWith('data:image/png') ? 'image/png' : 'image/jpeg', dataUrl: shot.image, fit: 'fit', createdAt: new Date().toISOString() }] : [];
+    if (references.length > 20 || references.some(r => !r || typeof r.id !== 'string' || !['storyboard','planBackground'].includes(r.role) || !['image/png','image/jpeg'].includes(r.mimeType) || !['fit','fill'].includes(r.fit) || typeof r.dataUrl !== 'string' || !/^data:image\/(png|jpeg);base64,[A-Za-z0-9+/=]+$/.test(r.dataUrl))) throw new Error('Invalid reference image data.');
+    const motionPaths = (Array.isArray(shot.motionPaths) ? shot.motionPaths : []) as MotionPath[];
+    if (motionPaths.length > 200 || motionPaths.some(p => !p || typeof p.id !== 'string' || typeof p.objectId !== 'string' || !objects.some(o => o.id === p.objectId) || typeof p.visible !== 'boolean' || !Array.isArray(p.points) || p.points.length > 1000 || p.points.some((q, i) => !q || typeof q.id !== 'string' || !vector(q.position) || q.order !== i))) throw new Error('Invalid motion path data.');
     if (shot.image && (typeof shot.image !== 'string' || !/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(shot.image))) throw new Error('Unsupported storyboard image.');
     if (shot.aspectRatio !== undefined && (typeof shot.aspectRatio !== 'number' || !Number.isFinite(shot.aspectRatio) || shot.aspectRatio < .1 || shot.aspectRatio > 10)) throw new Error('Invalid shot aspect ratio.');
     const focus = { ...defaultFocus(), ...(shot.focus ? record(shot.focus) : {}) };
@@ -81,17 +86,17 @@ export function migrateProject(input: unknown): Project {
     if (!Array.isArray(rules) || rules.length > 10000 || rules.some(c => !c || typeof c.id !== 'string' || typeof c.objectId !== 'string' || typeof c.referenceId !== 'string' || !relationValues[c.space]?.includes(c.relation)) || new Set(rules.map(c => c.id)).size !== rules.length) throw new Error('Invalid spatial constraints.');
     if (shot.includeTechnical !== undefined && typeof shot.includeTechnical !== 'boolean') throw new Error('Invalid export preference.');
     if(shot.useEditorColors !== undefined && typeof shot.useEditorColors !== 'boolean') throw new Error('Invalid editor color preference.');
-    return { ...shot, spiral: validateSpiral(shot.spiral), useEditorColors: shot.useEditorColors ?? false, ...subjectIds, hardConstraints: rules, includeTechnical: shot.includeTechnical ?? false, focus, environment, aspectRatio: shot.aspectRatio ?? 16 / 9, title: text(shot.title), description: text(shot.description), status: shot.status === 'Approved' ? 'Approved' : 'Draft', image: shot.image ?? null, objects, overlays: Array.isArray(shot.overlays) ? shot.overlays.filter(k => ['thirds', 'cross', 'safe', 'spiral'].includes(String(k))) : ['thirds'], spatialDescription: text(shot.spatialDescription), plan, annotations: { ...defaultAnnotations(), ...(shot.annotations ? record(shot.annotations) : {}) }, primarySubjectId: typeof shot.primarySubjectId === 'string' && objects.some(o => o.id === shot.primarySubjectId) ? shot.primarySubjectId : null, constraints: text(shot.constraints), negativeConstraints: text(shot.negativeConstraints) } as Shot;
+    return { ...shot, spiral: validateSpiral(shot.spiral), useEditorColors: shot.useEditorColors ?? false, ...subjectIds, hardConstraints: rules, includeTechnical: shot.includeTechnical ?? false, focus, environment, aspectRatio: shot.aspectRatio ?? 16 / 9, title: text(shot.title), description: text(shot.description), duration: typeof shot.duration === 'number' && Number.isFinite(shot.duration) && shot.duration > 0 ? shot.duration : 5, sequence: text(shot.sequence, '01'), shotType: text(shot.shotType, 'Establishing'), status: shot.status === 'Approved' ? 'Approved' : 'Draft', image: references.find(r => r.role === 'storyboard')?.dataUrl ?? shot.image ?? null, references, motionPaths, notes: text(shot.notes), aiEnhancement: text(shot.aiEnhancement), objects, overlays: Array.isArray(shot.overlays) ? shot.overlays.filter(k => ['thirds', 'cross', 'safe', 'spiral'].includes(String(k))) : ['thirds'], spatialDescription: text(shot.spatialDescription), plan, annotations: { ...defaultAnnotations(), ...(shot.annotations ? record(shot.annotations) : {}) }, primarySubjectId: typeof shot.primarySubjectId === 'string' && objects.some(o => o.id === shot.primarySubjectId) ? shot.primarySubjectId : null, constraints: text(shot.constraints), negativeConstraints: text(shot.negativeConstraints) } as Shot;
   });
-  return { ...raw, id: raw.id, shots, activeShotId: shots.some(s => s.id === raw.activeShotId) ? raw.activeShotId as string : shots[0]?.id ?? null, nextShotNumber: Math.max(Number(raw.nextShotNumber) || 1, ...shots.map(s => s.number + 1)), schemaVersion: 5, name: text(raw.name, 'Untitled project'), updatedAt: text(raw.updatedAt, new Date().toISOString()) } as Project;
+  return { ...raw, id: raw.id, shots, activeShotId: shots.some(s => s.id === raw.activeShotId) ? raw.activeShotId as string : shots[0]?.id ?? null, nextShotNumber: Math.max(Number(raw.nextShotNumber) || 1, ...shots.map(s => s.number + 1)), schemaVersion: 6, name: text(raw.name, 'Untitled project'), updatedAt: text(raw.updatedAt, new Date().toISOString()) } as Project;
 }
 export function projectBlob(project: Project): Blob {
-  return new Blob([JSON.stringify({ format: 'JingYu Project', version: 1, project }, null, 2)], { type: 'application/json' });
+  return new Blob([JSON.stringify({ format: 'SceneAxis Project', version: 1, project }, null, 2)], { type: 'application/json' });
 }
-export function safeFilename(name: string) { return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 100) || 'JingYu'; }
+export function safeFilename(name: string) { return name.replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').slice(0, 100) || 'SceneAxis'; }
 type WritableHandle = { getFile(): Promise<File>; createWritable(): Promise<{ write(data: Blob): Promise<void>; close(): Promise<void>; abort(): Promise<void> }> };
 type FilePickerWindow = Window & { showOpenFilePicker?: (options: unknown) => Promise<WritableHandle[]>; showSaveFilePicker?: (options: unknown) => Promise<WritableHandle> };
-const pickerTypes = [{ description: 'JingYu Project', accept: { 'application/json': ['.jyproject'] } }];
+const pickerTypes = [{ description: 'SceneAxis Project', accept: { 'application/json': ['.jyproject'] } }];
 export class WebProjectStorage implements ProjectStorage {
   private handles = new Map<string, WritableHandle>();
   private db = new Database();
@@ -99,7 +104,7 @@ export class WebProjectStorage implements ProjectStorage {
   activate(id: string) { localStorage.setItem('jy-active-project', id); }
   async load(id: string) {
     const raw = await this.db.projects.get(id); if (!raw) return undefined;
-    if (raw.schemaVersion !== 5 && !(await this.db.backups.where('projectId').equals(id).toArray()).some(b => (b.data as { schemaVersion?: number })?.schemaVersion === raw.schemaVersion)) await this.db.backups.add({ projectId: id, createdAt: new Date().toISOString(), data: raw });
+    if (raw.schemaVersion !== 6 && !(await this.db.backups.where('projectId').equals(id).toArray()).some(b => (b.data as { schemaVersion?: number })?.schemaVersion === raw.schemaVersion)) await this.db.backups.add({ projectId: id, createdAt: new Date().toISOString(), data: raw });
     return migrateProject(raw);
   }
   async save(project: Project) { await this.db.projects.put(project); }
@@ -107,7 +112,7 @@ export class WebProjectStorage implements ProjectStorage {
   async importFile(file: File) {
     if (file.size > 100 * 1024 * 1024) throw new Error('Project file exceeds 100 MB.');
     const data = record(JSON.parse(await file.text()));
-    if (data.format && data.format !== 'JingYu Project') throw new Error('Unsupported project file format.');
+    if (data.format && !['JingYu Project','SceneAxis Project'].includes(String(data.format))) throw new Error('Unsupported project file format.');
     if (data.format && data.version !== 1) throw new Error('Unsupported portable project version.');
     const project = migrateProject(data.project ?? data);
     // Import is always a new workspace: existing autosaves can never be overwritten by opening a file.

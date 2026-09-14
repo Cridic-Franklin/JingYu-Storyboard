@@ -2,6 +2,11 @@ node_modules/
 dist/
 *.tsbuildinfo
 .verification/
+.runtime/
+.cache/
+.vite/
+tmp/
+temp/
 
 .pnpm-store/
 *.jyproject
@@ -12,6 +17,10 @@ dist/
 
 # Logs, coverage, and browser-test output
 *.log
+*.db
+*.sqlite
+*.sqlite3
+*.dump
 logs/
 coverage/
 playwright-report/
@@ -28,3 +37,7 @@ output/playwright/
 .DS_Store
 Thumbs.db
 Desktop.ini
+
+# Local Codex/editor scratch state
+.codex/
+*.local

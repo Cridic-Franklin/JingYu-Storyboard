@@ -1,19 +1,19 @@
 # Portable project format
 
-Current extension: `.jyproject`. Preserve existing readers and migration paths when evolving the format.
+Current extension: `.jyproject`. SceneAxis preserves the established extension and accepts both legacy `JingYu Project` and current `SceneAxis Project` containers.
 
 ## Version 1 container
 
-Container version `1`, project `schemaVersion: 5`, and Dexie database schema `2` are separate version domains; an application release number does not automatically change any of them.
+Container version `1`, project `schemaVersion: 6`, and Dexie database schema `2` are separate version domains; an application release number does not automatically change any of them.
 
 The foundation implementation uses self-contained UTF-8 JSON instead of ZIP, avoiding a packaging dependency while the schema is evolving:
 
 ```json
 {
-  "format": "JingYu Project",
+  "format": "SceneAxis Project",
   "version": 1,
   "project": {
-    "schemaVersion": 5,
+    "schemaVersion": 6,
     "id": "uuid",
     "name": "JUST_BREATHE",
     "updatedAt": "ISO-8601",
@@ -26,7 +26,7 @@ The foundation implementation uses self-contained UTF-8 JSON instead of ZIP, avo
 
 Shots contain stable IDs, numbers, authored text, status, base64 storyboard images, the shared objects array, composition guides, camera annotation choices, Plan view/layer settings, sketches, measurements, optional primary subject and spatial constraint text. Objects contain stable IDs, display names, types, transforms, lens FOV, semantic front fields, visibility and lock state.
 
-No referenced local paths or IndexedDB keys are required to reopen a file on another computer. Images are embedded data URLs. The file size limit is 100 MB. PNG/JPEG/WebP/GIF storyboard images retain the existing 10 MB per-image import limit.
+No referenced local paths or IndexedDB keys are required to reopen a file on another computer. Images are embedded data URLs. The file size limit is 100 MB. New storyboard references accept PNG/JPEG up to 10 MB; valid legacy WebP/GIF data is retained in the compatibility `image` field but is not accepted by the V0.98 reference importer.
 
 ## Web save behavior
 
@@ -47,6 +47,16 @@ Missing Plan data, annotations, semantic-front fields and constraints receive de
 Backups are retained in IndexedDB; an automatic backup deletion policy and recovery browser are deliberately not introduced yet. Clearing browser site data still clears local projects and backups, so keep portable project files.
 
 ZIP packaging with `project.json` and separate embedded assets is a future container version. The storage adapter will handle that transition; views will not change.
+
+## V0.98 fields (schema 6)
+
+- Shot metadata adds `duration`, `sequence`, `shotType`, `notes` and optional `aiEnhancement`.
+- `references[]` embeds PNG/JPEG storyboard or Plan-background records with stable ID, name, MIME type, fit/fill mode, timestamp and optional local-source metadata. The legacy `image` field mirrors the storyboard reference for backward-tolerant consumers.
+- `motionPaths[]` contains a stable owner `objectId`, visibility, smoothing flag and ordered world-space points. Owners and point/path IDs are remapped on shot duplication or Copy Previous; deleting an owner removes its paths.
+- Objects add `semanticType`; Characters add independent `headFacingYaw`. New low-poly storyboard types are validated alongside existing objects.
+- AI provider, endpoint, model and API key are not project data. The API key is session memory only. Optional AI prose is non-authoritative and never replaces deterministic spatial facts.
+
+Migration from schema 5 or earlier supplies safe defaults and copies the source record into the IndexedDB backups table before replacement. Current readers reject future schemas and malformed references/paths without changing the active project.
 
 ## V0.9 fields (project schema 4)
 

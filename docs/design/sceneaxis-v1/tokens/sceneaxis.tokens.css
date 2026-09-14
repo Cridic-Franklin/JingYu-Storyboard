@@ -1,0 +1,47 @@
+/* SceneAxis Brand & UI Tokens — v1 */
+:root {
+  --sa-accent-system: #41C6CE;
+  --sa-accent-system-soft: #8CDDE1;
+  --sa-accent-cinema: #D6A84F;
+  --sa-accent-cinema-strong: #E7B85E;
+  --sa-success: #45B87A;
+  --sa-warning: #DCA44A;
+  --sa-error: #D85B60;
+  --sa-radius-xs: 4px;
+  --sa-radius-sm: 6px;
+  --sa-radius-md: 8px;
+  --sa-radius-lg: 12px;
+  --sa-space-1: 4px;
+  --sa-space-2: 8px;
+  --sa-space-3: 12px;
+  --sa-space-4: 16px;
+  --sa-space-5: 24px;
+  --sa-space-6: 32px;
+  --sa-text-scale: 1;
+}
+
+[data-theme="dark"] {
+  --sa-bg-primary: #0B0F12;
+  --sa-bg-secondary: #121A20;
+  --sa-surface: #18232C;
+  --sa-surface-elevated: #23313B;
+  --sa-text-primary: #F1F5F7;
+  --sa-text-secondary: #A6B4BE;
+  --sa-border: #2F3B46;
+  --sa-focus: #41C6CE;
+}
+
+[data-theme="light"] {
+  --sa-bg-primary: #F4F6F7;
+  --sa-bg-secondary: #E9EEF0;
+  --sa-surface: #FFFFFF;
+  --sa-surface-elevated: #F7F9FA;
+  --sa-text-primary: #11181D;
+  --sa-text-secondary: #5C6973;
+  --sa-border: #CCD5DA;
+  --sa-focus: #167F86;
+}
+
+[data-text-size="compact"] { --sa-text-scale: .90; }
+[data-text-size="default"] { --sa-text-scale: 1; }
+[data-text-size="large"]   { --sa-text-scale: 1.15; }

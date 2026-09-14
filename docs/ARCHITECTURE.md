@@ -1,6 +1,6 @@
 # Architecture
 
-JingYu retains the V0.2 React/TypeScript/Vite, Zustand, Three.js / React Three Fiber / drei, and Dexie architecture. No backend or AI service is involved.
+SceneAxis retains the React/TypeScript/Vite, Zustand, Three.js / React Three Fiber / drei, and Dexie architecture. The deterministic editor remains fully local. V0.98 adds an optional browser-to-provider AI adapter; it introduces no SceneAxis backend, account system, cloud persistence, or AI-owned scene state.
 
 Read [PROJECT_STATE.md](../PROJECT_STATE.md) for the current baseline and next target. This document describes implementation structure, not release status.
 
@@ -19,6 +19,8 @@ Transforms use meters, Y-up, Euler XYZ degrees. Plan horizontal is X and vertica
 - `src/lib/scene.ts`: bounds, projection and concise bilingual descriptions.
 - `src/lib/spatial.ts`: semantic front, screen-facing, depth, measurements and base structured data.
 - `src/lib/semantics.ts`: explicit relation spaces, crop/body/depth approximations, semantic TXT/JSON and structured constraint validation.
+- `src/lib/ai.ts`: provider-neutral text/structured generation with timeout, abort, HTTP/error handling and schema validation. Provider output may enhance prose but never replaces deterministic facts.
+- `src/lib/shotSchema.ts`: future-facing structured shot-script and blocking-solver interfaces; no solver is presented as implemented.
 - `src/lib/camera.ts`: aspect/lens conversion and compact shot-size/angle presets; `src/lib/focus.ts`: optical target/point resolution.
 - `NumericField.tsx`: draft text isolated from committed numeric scene values.
 - `FocusControls.tsx` / `FocusOverlay.tsx`: shot-owned focus data and Camera View picking/drawing.
@@ -28,6 +30,7 @@ Transforms use meters, Y-up, Euler XYZ degrees. Plan horizontal is X and vertica
 - `WorkspacePresets.tsx`: existing layout settings and views, including simultaneous Camera/Plan AI Review.
 - `src/components/Stage.tsx`: existing proxy geometry, editor and camera renderer; the preview registers a capture callback.
 - `src/components/PlanView.tsx`: interactive SVG Plan View and reusable export drawing.
+- `src/components/MotionPathControls.tsx`: shot-owned motion-path editing rendered from the same points in Spatial 3D and Plan 2D.
 - `src/components/CameraOverlay.tsx`: one overlay implementation for live preview and exported frames.
 - `src/lib/export.tsx`: camera capture, SVG compositing, PNG creation and clipboard fallback.
 - `src/storage/ProjectStorage.ts`: browser storage adapter, migration/validation, file picker and portable project I/O.
@@ -50,6 +53,12 @@ Camera capture temporarily renders the existing preview scene at the requested s
 WebProjectStorage implements local loading/saving, recent project listing, portable import/export and browser download. IndexedDB remains the autosave source of truth. Unknown future project versions are rejected without replacing records. Legacy records are copied to the backups table before migration. Import always receives a new project ID, leaving existing local projects untouched.
 
 A future DesktopProjectStorage can supply native file operations through a thin Tauri shell. Scene, geometry, Plan, measurements, overlays and export data stay in shared TypeScript. Tauri is not installed.
+
+## V0.98 application shell and AI boundary
+
+The official SceneAxis SVG assets are static application resources under `public/brand`. A single settings store owns theme, text scale, navigation section and non-secret AI provider preferences. The API key exists only in the in-memory Zustand store: it is excluded from persisted preferences, project files, IndexedDB and export metadata.
+
+Reference images are embedded shot records, not scene geometry. Motion paths reference stable object IDs and contain ordered world-space points; deleting an owner removes its path. Shot duplication and Copy Previous remap object/path IDs together, preserving one shared Scene Graph. AI enhancement receives a deterministic description plus structured facts and can only write an optional prose field. Failure leaves deterministic output intact.
 
 See [project format](PROJECT_FORMAT.md) for persistence contracts, [AI export](AI_EXPORT.md) for output semantics, and [release plan](RELEASE_PLAN.md) for platform strategy.
 

@@ -80,20 +80,20 @@ const fs=require('node:fs/promises');
  assert.deepEqual(exportProof.camera,[640,1138]);assert.deepEqual(exportProof.plan,[800,480]);await fs.writeFile('.verification/v095-camera.png',Buffer.from(exportProof.bytes[0]));await fs.writeFile('.verification/v095-plan.png',Buffer.from(exportProof.bytes[1]));
  console.log('PASS sixteen aspect/orientation combinations, mirror/offset/scale/reset and Camera/Plan PNG');
 
- const savedShot=JSON.parse(JSON.stringify(await shot()));const downloading=page.waitForEvent('download');await page.evaluate(()=>v095.store.getState().saveProject());const download=await downloading;const bytes=await fs.readFile(await download.path());const envelope=JSON.parse(bytes.toString());assert.equal(envelope.project.schemaVersion,5);
+ const savedShot=JSON.parse(JSON.stringify(await shot()));const downloading=page.waitForEvent('download');await page.evaluate(()=>v095.store.getState().saveProject());const download=await downloading;const bytes=await fs.readFile(await download.path());const envelope=JSON.parse(bytes.toString());assert.equal(envelope.project.schemaVersion,6);
  await page.evaluate(async data=>{const project=await v095.storage.projectStorage.importFile(new File([data],'roundtrip.jyproject'));await v095.store.getState().openProject(project);},bytes.toString());assert.deepEqual((await shot()).objects,savedShot.objects);assert.deepEqual((await shot()).spiral,guide);
  const migration=await page.evaluate(()=>{
   const p=structuredClone(v095.store.getState().project);p.schemaVersion=4;for(const s of p.shots){s.objects=s.objects.filter(o=>o.type!=='OBJ');delete s.spiral;delete s.useEditorColors;for(const o of s.objects){delete o.pose;delete o.displayColor;}}
   const original=JSON.stringify(p),m=v095.storage.migrateProject(p),old=m.shots[0].objects.find(o=>o.type==='Character');let rejected=0;
-  for(const change of [p=>p.schemaVersion=6,p=>p.shots[0].spiral.scale=-1,p=>p.shots[0].objects.find(o=>o.type==='Character').pose.joints.head=[NaN,0,0],p=>p.shots[0].objects[0].displayColor='url(bad)',p=>p.shots[0].objects.find(o=>o.type==='OBJ').asset.positions=[0,0,0]]){const test=structuredClone(v095.store.getState().project);change(test);try{v095.storage.migrateProject(test);}catch{rejected++;}}
+  for(const change of [p=>p.schemaVersion=7,p=>p.shots[0].spiral.scale=-1,p=>p.shots[0].objects.find(o=>o.type==='Character').pose.joints.head=[NaN,0,0],p=>p.shots[0].objects[0].displayColor='url(bad)',p=>p.shots[0].objects.find(o=>o.type==='OBJ').asset.positions=[0,0,0]]){const test=structuredClone(v095.store.getState().project);change(test);try{v095.storage.migrateProject(test);}catch{rejected++;}}
   return {unchanged:JSON.stringify(p)===original,schema:m.schemaVersion,pose:old.pose.preset,colors:m.shots[0].useEditorColors,spiral:m.shots[0].spiral.scale,rejected};
- });assert.deepEqual(migration,{unchanged:true,schema:5,pose:'standing',colors:false,spiral:1,rejected:5});
+ });assert.deepEqual(migration,{unchanged:true,schema:6,pose:'standing',colors:false,spiral:1,rejected:5});
  await page.reload();await page.getByRole('status').filter({hasText:'All changes saved'}).waitFor();await bind();assert.deepEqual((await shot()).objects,savedShot.objects);assert.deepEqual((await shot()).spiral,guide);
  console.log('PASS portable download/open, IndexedDB reload, V0.9 defaults and rejection of malformed/newer data');
 
  await page.getByRole('button',{name:'Reset Layout',exact:true}).click();
  await page.getByRole('button',{name:'Spatial 3D',exact:true}).click();await page.evaluate(()=>v095.settings.getState().resize({left:270,bottom:260,preview:.62}));
- await page.getByRole('button',{name:'Plan View',exact:true}).click();assert.equal(await page.evaluate(()=>v095.settings.getState().layout.bottom),230);
+ await page.getByRole('button',{name:'Plan View',exact:true}).click();assert.equal(await page.evaluate(()=>v095.settings.getState().layout.bottom),320);
  await page.evaluate(()=>v095.settings.getState().resize({left:240,bottom:210}));await page.getByRole('button',{name:'Spatial 3D',exact:true}).click();assert.equal(await page.evaluate(()=>v095.settings.getState().layout.left),270);
  await page.getByRole('button',{name:'Plan View',exact:true}).click();assert.equal(await page.evaluate(()=>v095.settings.getState().layout.left),240);
  await page.getByRole('button',{name:'Reset Layout',exact:true}).click();assert.equal(await page.evaluate(()=>v095.settings.getState().layout.left),213);

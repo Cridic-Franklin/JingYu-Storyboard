@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 160" role="img" aria-labelledby="title">
+  <title id="title">镜域 SceneAxis — Horizontal Logo Light</title>
+  <defs>
+    <linearGradient id="c1" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#178D95" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#41C6CE" stop-opacity="0.34"/>
+    </linearGradient>
+    <linearGradient id="c2" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#41C6CE" stop-opacity="0.24"/>
+      <stop offset="1" stop-color="#178D95" stop-opacity="0.85"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(14,8) scale(.56)">
+    <polygon points="28,128 126,84 126,172" fill="url(#c1)" stroke="#178D95" stroke-width="2"/>
+    <polygon points="132,128 226,62 226,194" fill="url(#c2)" stroke="#178D95" stroke-width="2"/>
+    <line x1="129" y1="28" x2="129" y2="228" stroke="#10161B" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="129" cy="128" r="13" fill="#10161B"/>
+  </g>
+  <text x="170" y="74" fill="#10161B" font-size="44" font-weight="700" font-family="system-ui, 'Microsoft YaHei', 'Noto Sans CJK SC', sans-serif">镜域</text>
+  <text x="292" y="74" fill="#10161B" font-size="40" font-weight="600" font-family="system-ui, sans-serif">SceneAxis</text>
+  <text x="171" y="112" fill="#55636E" font-size="15" letter-spacing="7" font-weight="500" font-family="system-ui, sans-serif">SPATIAL DIRECTOR</text>
+</svg>
